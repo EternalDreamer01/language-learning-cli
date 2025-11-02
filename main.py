@@ -114,7 +114,12 @@ def train_vocabulary(_from: str, _to: str):
 
 		retry = True
 		while continue_training and retry:
-			user_answer = slot_input(from_colour, to_colour, _from.upper(), _to.upper(), word.ljust(PADDING, " "), len(lword), visible_slots)
+			user_answer = None
+			try:
+				user_answer = slot_input(from_colour, to_colour, _from.upper(), _to.upper(), word.ljust(PADDING, " "), len(lword), visible_slots)
+			except KeyboardInterrupt:
+				pass
+
 			retry = False
 			if user_answer is None:
 				continue_training = False
