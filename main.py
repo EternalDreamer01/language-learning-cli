@@ -82,12 +82,9 @@ def train_vocabulary(_from: str, _to: str):
 		current_pos = 0  # tracks the letter index in the whole sentence
 
 		for w in re.split(r"|".join(always_visible), lword):
-			# Pick a random letter index within the word
 			letter_idx_in_word = random.randrange(len(w))
 			global_idx = current_pos + letter_idx_in_word
-			# Global index in sentence
 			visible_slots[global_idx] = w[letter_idx_in_word]
-			# Move current_pos past this word and the following space
 			current_pos += len(w) + 1
 
 		user_answer = slot_input(from_colour, to_colour, _from.upper(), _to.upper(), word.ljust(PADDING, " "), len(lword), visible_slots)
