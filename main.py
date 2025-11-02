@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 ################################################################################
 # @file      main.py
 # @brief     
@@ -17,8 +17,9 @@
 from dotenv import load_dotenv
 import argparse
 import sys, os
-import re, random, math
+import re, random, math, json
 from unidecode import unidecode
+from wrpy import WordReference
 
 
 def conjugation_table(_from: str, _to: str, time: str|None=None):
@@ -253,12 +254,54 @@ def slot_input(from_colour: str, to_colour: str, from_text: str, to_text: str, p
 	# 	print()
 	return result
 
+
+WORD_CONTEXT_ADJUST = 15
+WORD_FROM_ADJUST_FULL = 25
+WORD_FROM_ADJUST = WORD_FROM_ADJUST_FULL - 10
+
+def translate_word(_from: str, _to: str, word: str, compound_forms: bool = False):
+	data = WordReference(_from, _to).translate(word)
+
+	def show_unique(translation: dict):
+		return f"\x1b[1m{translation['meaning']}  \x1b[2m{translation['notes']}, {translation['grammar']}\x1b[0m"
+
+	def print_unique_example(text_from: str, text_to: str, padding: int = 0):
+		print(f"{'':>{padding}s}\x1b[2m{text_from}\n{'':>{padding}s}\x1b[3m{text_to}\x1b[0m")
+
+	print(f"\x1b[1m{data['from_lang']} 🠲  {data['to_lang']}\x1b[0m")
+	for translation in data["translations"]:
+		if translation['title'].strip().lower() == "compound forms":
+			if not compound_forms:
+				continue
+		# Title
+		print(f"\n\n\x1b[1m{translation['title']}\x1b[0m")
+		previous_line_from = ""
+		for entry in translation["entries"]:
+			# 1st line
+			line = f"{entry['from_word']['source']}\x1b[0;2m {entry['from_word']['grammar']}.\x1b[0m"
+			if line == previous_line_from:
+				print(f"  {''.ljust(WORD_FROM_ADJUST)} {entry['context'].rjust(WORD_CONTEXT_ADJUST, ' ')}: {show_unique(entry['to_word'][0])}")
+			else:
+				print(f"  {line.ljust(WORD_FROM_ADJUST_FULL)} {entry['context'].rjust(WORD_CONTEXT_ADJUST, ' ')}: {show_unique(entry['to_word'][0])}")
+				previous_line_from = line
+
+			for to_word in entry["to_word"][1:]:
+				print(f"  {''.ljust(WORD_FROM_ADJUST)} {entry['context'].rjust(WORD_CONTEXT_ADJUST, ' ')}: {show_unique(to_word)}")
+				
+			# Example
+			if entry["from_example"] is not None and len(entry["to_example"]) != 0:
+				print_unique_example(entry["from_example"], entry["to_example"][0], 8)
+			print()
+
+
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(prog="language-learning-cli", description="A CLI tool for language learning.")
 	parser.add_argument('TO', nargs="?")
 	parser.add_argument('FROM', nargs="?")
 	parser.add_argument('-c', '--conjugation', action='store_true', help='Conjugate verbs')
-	parser.add_argument('-t', '--translate', action='store_true', help='Translate text')
+	parser.add_argument('-w', '--translate-word', type=str, help='Translate word')
+	parser.add_argument('-f', '--compound-forms', action='store_true', help='Include compound forms')
+	parser.add_argument('-t', '--translate-text', type=str, help='Translate text')
 	args = parser.parse_args()
 
 	# print(args)
@@ -267,9 +310,13 @@ if __name__ == "__main__":
 
 	_from = (os.getenv("DEFAULT_LANGUAGE_FROM", "en") if args.FROM is None else args.FROM).lower()
 	_to = (os.getenv("DEFAULT_LANGUAGE_TO", "es") if args.TO is None else args.TO).lower()
-	# print(_from, _to)
+	# wr
 
 	if args.conjugation:
 		conjugation_table(_from, _to)
+	elif args.translate_word:
+		translate_word(_from, _to, args.translate_word, args.compound_forms)
+		# print(json.dumps(WordReference(_from, _to).translate(args.translate_word)))
 	else:
 		train_vocabulary(_from, _to)
+
