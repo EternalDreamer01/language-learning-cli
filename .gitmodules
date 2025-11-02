@@ -1,0 +1,3 @@
+[submodule "top-english-wordlists"]
+	path = top-english-wordlists
+	url = https://github.com/david47k/top-english-wordlists.git
