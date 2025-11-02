@@ -260,12 +260,29 @@ def slot_input(from_colour: str, to_colour: str, from_text: str, to_text: str, p
 	return result
 
 
-WORD_CONTEXT_ADJUST = 15
+WORD_CONTEXT_ADJUST = 28
 WORD_FROM_ADJUST_FULL = 25
 WORD_FROM_ADJUST = WORD_FROM_ADJUST_FULL - 10
 
 def translate_word(_from: str, _to: str, word: str, compound_forms: bool = False):
-	data = WordReference(_from, _to).translate(word)
+	data = {}
+	changed_to_english = False
+	while not data:
+		try:
+			data = WordReference(_from, _to).translate(word)
+		except NotImplementedError:
+			print(f"\x1b[31mTranslation dictionary '{_from} <> {_to}' not available\x1b[0m", file=sys.stderr)
+			if _from != "en":
+				_from = "en"
+				changed_to_english = True
+				continue
+			return
+		except NameError:
+			print(f"Error: No translation for '{word}'", file=sys.stderr)
+			return
+
+	if changed_to_english:
+		print(f"\x1b[31m  changed to '{_from} <> {_to}' instead\x1b[0m\n")
 
 	def show_unique(translation: dict):
 		if translation['notes'] is not None:
@@ -287,18 +304,22 @@ def translate_word(_from: str, _to: str, word: str, compound_forms: bool = False
 				continue
 		# Title
 		print(f"\n\n\x1b[1m{translation['title']}\x1b[0m")
-		previous_line_from = ""
+		previous_word_from = ""
+		previous_context = ""
 		for entry in translation["entries"]:
 			# 1st line
-			line = f"{entry['from_word']['source']}\x1b[0;2m {entry['from_word']['grammar']}.\x1b[0m"
-			if line == previous_line_from:
-				print(f"  {''.ljust(WORD_FROM_ADJUST)} {entry['context'].rjust(WORD_CONTEXT_ADJUST, ' ')}: {show_unique(entry['to_word'][0])}")
-			else:
-				print(f"  {line.ljust(WORD_FROM_ADJUST_FULL)} {entry['context'].rjust(WORD_CONTEXT_ADJUST, ' ')}: {show_unique(entry['to_word'][0])}")
-				previous_line_from = line
+			word_from = f"{entry['from_word']['source']}\x1b[0;2m {entry['from_word']['grammar']}.\x1b[0m"
+			context = entry['context'] or ""
+			if word_from != previous_word_from:
+				print(f"  {word_from.ljust(WORD_FROM_ADJUST_FULL)}")
+				previous_word_from = word_from
 
-			for to_word in entry["to_word"][1:]:
-				print(f"  {''.ljust(WORD_FROM_ADJUST)} {entry['context'].rjust(WORD_CONTEXT_ADJUST, ' ')}: {show_unique(to_word)}")
+			for to_word in entry["to_word"]:
+				if context == previous_context:
+					print(f"  {''.rjust(WORD_CONTEXT_ADJUST)}  {show_unique(to_word)}")
+				else:
+					print(f"  {context.rjust(WORD_CONTEXT_ADJUST)}: {show_unique(to_word)}")
+					previous_context = context
 				
 			# Example
 			if entry["from_example"] is not None and len(entry["to_example"]) != 0:
