@@ -38,10 +38,10 @@ MAX_MOD_COLOUR = (0x100-MIN_COLOUR) * 3 - 1
 def str_to_shell_colour(s: str) -> int:
 	res = (sum([(ord(c))**2 for c in s.upper()]) + 60) % MAX_MOD_COLOUR
 	if res < MAX_DIV:
-		return "bold #"+hex(MIN_COLOUR + (res % 7) * 0x11).split('x')[-1]+"0000"
+		return "bold #"+hex(MIN_COLOUR + (res % 7) * 0x11)[2:]+"0000"
 	elif res < (MAX_DIV*2):
-		return "bold #00"+hex(MIN_COLOUR + (res % 7) * 0x11).split('x')[-1]+"00"
-	return "bold #0000"+hex(MIN_COLOUR + (res % 7) * 0x11).split('x')[-1]
+		return "bold #00"+hex(MIN_COLOUR + (res % 7) * 0x11)[2:]+"00"
+	return "bold #0000"+hex(MIN_COLOUR + (res % 7) * 0x11)[2:]
 
 facultative_words = {
 	"fr": r"une?|le(ur)?s?|la|du|des",
@@ -73,10 +73,9 @@ def train_vocabulary(_from: str, _to: str):
 		if not " " in word:
 			continue
 
-		lword = word
-		if _from in facultative_words:
-			lword = re.sub(r"^("+ facultative_words[_from] +r")\s+", "", word)
 		lword = wordlist[word].strip().lower()
+		if _to in facultative_words:
+			lword = re.sub(r"^("+ facultative_words[_to] +r")\s+", "", lword).strip()
 
 		visible_slots = {index: value for index, value in enumerate(lword) if value in always_visible}
 
