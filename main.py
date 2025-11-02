@@ -263,7 +263,14 @@ def translate_word(_from: str, _to: str, word: str, compound_forms: bool = False
 	data = WordReference(_from, _to).translate(word)
 
 	def show_unique(translation: dict):
-		return f"\x1b[1m{translation['meaning']}  \x1b[2m{translation['notes']}, {translation['grammar']}\x1b[0m"
+		if translation['notes'] is not None:
+			translation['notes'] = re.sub(r"^can,\s*", "", translation['notes'], flags=re.IGNORECASE).strip()
+			if translation['notes']:
+				translation['notes'] += ", "
+		else:
+			translation['notes'] = ''
+		# translation['grammar'] = re.sub(r"(n(m|f)|pl)+", r"\1. ", translation['grammar'], flags=re.IGNORECASE).strip()
+		return f"\x1b[1m{translation['meaning']}  \x1b[2m{translation['notes']}{translation['grammar']}.\x1b[0m"
 
 	def print_unique_example(text_from: str, text_to: str, padding: int = 0):
 		print(f"{'':>{padding}s}\x1b[2m{text_from}\n{'':>{padding}s}\x1b[3m{text_to}\x1b[0m")
