@@ -51,6 +51,8 @@ facultative_words = {
 
 always_visible = [" ", "-", "'"]
 
+PADDING = 16
+
 def train_vocabulary(_from: str, _to: str):
 	wordlist = {}
 	failed_once = set()
@@ -89,11 +91,11 @@ def train_vocabulary(_from: str, _to: str):
 			# Move current_pos past this word and the following space
 			current_pos += len(w) + 1
 
-		user_answer = slot_input(from_colour, to_colour, _from.upper(), _to.upper(), word, len(lword), visible_slots)
+		user_answer = slot_input(from_colour, to_colour, _from.upper(), _to.upper(), word.ljust(PADDING, " "), len(lword), visible_slots)
 		if user_answer is None:
 			break
 		elif user_answer == "":
-			print(f"  {word} = {wordlist[word]}")
+				print(f"            {word:>{PADDING}s} = {wordlist[word]}")
 		else:
 			luser = user_answer.lower()
 
@@ -109,11 +111,11 @@ def train_vocabulary(_from: str, _to: str):
 			if lword == re.sub(r"^(el|le|la|un(a|e)?|du) ", "", luser):
 				print("\x1b[1;32m\u2714 Correct !\x1b[0m")
 			elif ulword == uluser:
-				print(f"\x1b[1;33m\u2714 Typo\x1b[0m      {word} = {wordlist[word]}")
+				print(f"\x1b[1;33m\u2714 Typo\x1b[0m      {word:>{PADDING}s} = {wordlist[word]}")
 			elif count == almost:
-				print(f"\x1b[1;33m\u2a2f Almost!\x1b[0m   {word} = {wordlist[word]}")
+				print(f"\x1b[1;33m\u2a2f Almost!\x1b[0m   {word:>{PADDING}s} = {wordlist[word]}")
 			else:
-				print(f"\x1b[1;31m\u2a2f Incorrect\x1b[0m {word} = {wordlist[word]}")
+				print(f"\x1b[1;31m\u2a2f Incorrect\x1b[0m {word:>{PADDING}s} = {wordlist[word]}")
 		print()
 
 
