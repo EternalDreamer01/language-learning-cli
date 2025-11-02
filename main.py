@@ -17,7 +17,7 @@
 from dotenv import load_dotenv
 import argparse
 import sys, os
-import re, random
+import re, random, math
 from unidecode import unidecode
 
 
@@ -52,6 +52,9 @@ facultative_words = {
 always_visible = [" ", "-", "'"]
 
 PADDING = 16
+HINT_RATIO = 10.0
+ALMOST_RATIO = 15.0
+ALMOST_RETRY = True
 
 def train_vocabulary(_from: str, _to: str):
 	wordlist = {}
@@ -59,7 +62,16 @@ def train_vocabulary(_from: str, _to: str):
 
 	with open(os.path.join(os.path.dirname(__file__), "most-common-words-multilingual/data/wordfrequency.info", _from+".txt"), "r") as ff:
 		with open(os.path.join(os.path.dirname(__file__), "most-common-words-multilingual/data/wordfrequency.info", _to+".txt"), "r") as ft:
-			wordlist = dict(zip(ff.read().splitlines(), ft.read().splitlines()))
+			wordlist = {
+				(re.sub(r"^("+ facultative_words[_from] +r")\s+", "", k) if k in facultative_words else k).strip():
+					(re.sub(r"^("+ facultative_words[_to] +r")\s+", "", v) if v in facultative_words else v).strip()
+				for k, v in dict(zip(ff.read().splitlines(), ft.read().splitlines())).items()
+			}
+			wordlist = {
+				k: v
+				for k, v in wordlist.items()
+				if len(k) > 2 and len(v) > 2
+			}
 
 	from_colour = str_to_shell_colour(_from)
 	to_colour = str_to_shell_colour(_to)
@@ -67,11 +79,12 @@ def train_vocabulary(_from: str, _to: str):
 	if from_colour == to_colour:
 		from_colour = "bold #000000"
 
-	while True:
+	continue_training = True
+	while continue_training:
 		word = random.choice(list(wordlist.keys()))
 
-		if not " " in word:
-			continue
+		# if not " " in word:
+		# 	continue
 
 		lword = wordlist[word].strip().lower()
 		if _to in facultative_words:
@@ -87,31 +100,47 @@ def train_vocabulary(_from: str, _to: str):
 			visible_slots[global_idx] = w[letter_idx_in_word]
 			current_pos += len(w) + 1
 
-		user_answer = slot_input(from_colour, to_colour, _from.upper(), _to.upper(), word.ljust(PADDING, " "), len(lword), visible_slots)
-		if user_answer is None:
-			break
-		elif user_answer == "":
-				print(f"            {word:>{PADDING}s} = {wordlist[word]}")
-		else:
-			luser = user_answer.lower()
+		# print(len(lword))
+		if len(lword) >= HINT_RATIO:
+			remaining = math.floor(len(lword) / HINT_RATIO)
+			# print(HINT_RATIO, remaining)
 
-			if _to in facultative_words:
-				lword = re.sub(r"^("+ facultative_words[_to] +r")\s+", "", lword)
-				luser = re.sub(r"^("+ facultative_words[_to] +r")\s+", "", luser)
+			while remaining > 0:
+				global_idx = random.randrange(len(lword))
+				if global_idx not in visible_slots:
+					visible_slots[global_idx] = lword[global_idx]
+					remaining -= 1
 
-			ulword = unidecode(lword)
-			uluser = unidecode(luser)
-			count = sum(1 for a, b in zip(ulword, luser) if a != b) + abs(len(ulword) - len(luser))
-			almost = 1 + (len(ulword) / 11)
-
-			if lword == re.sub(r"^(el|le|la|un(a|e)?|du) ", "", luser):
-				print("\x1b[1;32m\u2714 Correct !\x1b[0m")
-			elif ulword == uluser:
-				print(f"\x1b[1;33m\u2714 Typo\x1b[0m      {word:>{PADDING}s} = {wordlist[word]}")
-			elif count == almost:
-				print(f"\x1b[1;33m\u2a2f Almost!\x1b[0m   {word:>{PADDING}s} = {wordlist[word]}")
+		retry = True
+		while continue_training and retry:
+			user_answer = slot_input(from_colour, to_colour, _from.upper(), _to.upper(), word.ljust(PADDING, " "), len(lword), visible_slots)
+			retry = False
+			if user_answer is None:
+				continue_training = False
+			elif user_answer == "":
+					print(f"            {word:>{PADDING}s} = {wordlist[word]}")
 			else:
-				print(f"\x1b[1;31m\u2a2f Incorrect\x1b[0m {word:>{PADDING}s} = {wordlist[word]}")
+				luser = user_answer.lower()
+
+				if _to in facultative_words:
+					lword = re.sub(r"^("+ facultative_words[_to] +r")\s+", "", lword)
+					luser = re.sub(r"^("+ facultative_words[_to] +r")\s+", "", luser)
+
+				ulword = unidecode(lword)
+				uluser = unidecode(luser)
+				count = sum(1 for a, b in zip(ulword, luser) if a != b) + abs(len(ulword) - len(luser))
+				almost = 1 + (len(ulword) / HINT_RATIO)
+
+				# print(count, almost)
+				if lword == re.sub(r"^(el|le|la|un(a|e)?|du) ", "", luser):
+					print("\x1b[1;32m\u2714 Correct !\x1b[0m")
+				elif ulword == uluser:
+					print(f"\x1b[1;33m\u2714 Typo\x1b[0m      {word:>{PADDING}s} = {wordlist[word]}")
+				elif count <= almost:
+					print(f"\x1b[1;33m  Almost!\x1b[0m")
+					retry = True
+				else:
+					print(f"\x1b[1;31m\u2a2f Incorrect\x1b[0m {word:>{PADDING}s} = {wordlist[word]}")
 		print()
 
 
