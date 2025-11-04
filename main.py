@@ -36,7 +36,7 @@ MIN_COLOUR = 0x99
 MAX_DIV = (0x100-MIN_COLOUR)
 MAX_MOD_COLOUR = (0x100-MIN_COLOUR) * 3 - 1
 
-def str_to_shell_colour(s: str) -> int:
+def str_to_shell_colour(s: str) -> str:
 	res = (sum([(ord(c))**2 for c in s.upper()]) + 60) % MAX_MOD_COLOUR
 	if res < MAX_DIV:
 		return "bold #"+hex(MIN_COLOUR + (res % 7) * 0x11)[2:]+"0000"
