@@ -1,0 +1,4 @@
+wrpy
+dotenv
+unidecode
+prompt_toolkit
