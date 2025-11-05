@@ -61,18 +61,20 @@ def train_vocabulary(_from: str, _to: str):
 	wordlist = {}
 	failed_once = set()
 
-	with open(os.path.join(os.path.dirname(__file__), "most-common-words-multilingual/data/wordfrequency.info", _from+".txt"), "r") as ff:
-		with open(os.path.join(os.path.dirname(__file__), "most-common-words-multilingual/data/wordfrequency.info", _to+".txt"), "r") as ft:
-			wordlist = {
-				(re.sub(r"^("+ facultative_words[_from] +r")\s+", "", k) if k in facultative_words else k).strip():
-					(re.sub(r"^("+ facultative_words[_to] +r")\s+", "", v) if v in facultative_words else v).strip()
-				for k, v in dict(zip(ff.read().splitlines(), ft.read().splitlines())).items()
-			}
-			wordlist = {
-				k: v
-				for k, v in wordlist.items()
-				if len(k) > 2 and len(v) > 2
-			}
+	with open(os.path.join(os.path.dirname(__file__), "top-english-wordlists/top_english_words_lower_1000000.txt"), "r") as ff:
+		keys = ff.read().splitlines()
+		wordlist = {
+			(re.sub(r"^("+ facultative_words[_from] +r")\s+", "", k) if k in facultative_words else k).strip():
+				None
+			for k, v in dict(zip(keys, [None for i in range(len(keys))])).items()
+		}
+		wordlist = {
+			k: v
+			for k, v in wordlist.items()
+			if len(k) > 2 # and len(v) > 2
+		}
+
+	# sys.exit(0)
 
 	from_colour = str_to_shell_colour(_from)
 	to_colour = str_to_shell_colour(_to)
@@ -83,11 +85,26 @@ def train_vocabulary(_from: str, _to: str):
 	continue_training = True
 	while continue_training:
 		word = random.choice(list(wordlist.keys()))
-
+		
 		# if not " " in word:
 		# 	continue
 
-		lword = wordlist[word].strip().lower()
+		try:
+			# print(word)
+			data = WordReference(_from, _to).translate(word)
+		except NameError:
+			continue
+		# print(data)
+		data = data["translations"][0]["entries"][0]["to_word"][0]
+		# print(data)
+		lword = re.sub(r"/[ao]", "", data["meaning"].split(", ")[0])
+		if len(lword) < 3:
+			continue
+		note = data["notes"]
+		if note is None:
+			note = ""
+
+		# lword = lword.strip().lower()
 		if _to in facultative_words:
 			lword = re.sub(r"^("+ facultative_words[_to] +r")\s+", "", lword).strip()
 
@@ -116,7 +133,7 @@ def train_vocabulary(_from: str, _to: str):
 		while continue_training and retry:
 			user_answer = None
 			try:
-				user_answer = slot_input(from_colour, to_colour, _from.upper(), _to.upper(), word.ljust(PADDING, " "), len(lword), visible_slots)
+				user_answer = slot_input(from_colour, to_colour, _from.upper(), _to.upper(), word.ljust(PADDING-len(note), " "), note, len(lword), visible_slots)
 			except KeyboardInterrupt:
 				pass
 
@@ -124,7 +141,7 @@ def train_vocabulary(_from: str, _to: str):
 			if user_answer is None:
 				continue_training = False
 			elif user_answer == "":
-					print(f"            {word:>{PADDING}s} = {wordlist[word]}")
+					print(f"            {word:>{PADDING}s} = {lword}")
 			else:
 				luser = user_answer.lower()
 
@@ -141,12 +158,12 @@ def train_vocabulary(_from: str, _to: str):
 				if lword == re.sub(r"^(el|le|la|un(a|e)?|du) ", "", luser):
 					print("\x1b[1;32m\u2714 Correct !\x1b[0m")
 				elif ulword == uluser:
-					print(f"\x1b[1;33m\u2714 Typo\x1b[0m      {word:>{PADDING}s} = {wordlist[word]}")
+					print(f"\x1b[1;33m\u2714 Typo\x1b[0m      {word:>{PADDING}s} = {lword}")
 				elif count <= almost:
 					print(f"\x1b[1;33m  Almost!\x1b[0m")
 					retry = True
 				else:
-					print(f"\x1b[1;31m\u2a2f Incorrect\x1b[0m {word:>{PADDING}s} = {wordlist[word]}")
+					print(f"\x1b[1;31m\u2a2f Incorrect\x1b[0m {word:>{PADDING}s} = {lword}")
 		print()
 
 
@@ -158,7 +175,7 @@ from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit.styles import Style
 from prompt_toolkit.keys import Keys
 
-def slot_input(from_colour: str, to_colour: str, from_text: str, to_text: str, prompt_text: str, length: int, filled_slots: dict = {}, newline: bool = True, expect_full_input: bool = False) -> str:
+def slot_input(from_colour: str, to_colour: str, from_text: str, to_text: str, prompt_text: str, note: str | None, length: int, filled_slots: dict = {}, newline: bool = True, expect_full_input: bool = False) -> str:
 	entered = ""
 
 	def autofill(res: str):
@@ -182,6 +199,7 @@ def slot_input(from_colour: str, to_colour: str, from_text: str, to_text: str, p
 	style = Style.from_dict({
 		"from": from_colour,
 		"to": to_colour,
+		"note": "italic",
 		# "prompt": "#00ffff bold",
 		# "filled": "#00ff00",
 		# "empty": "#ffffff",
@@ -193,7 +211,9 @@ def slot_input(from_colour: str, to_colour: str, from_text: str, to_text: str, p
 		fragments = [
       		("class:prompt", "["),
         	("class:from", from_text),
-			("class:prompt", f"] {prompt_text}  ["),
+			("class:prompt", f"] {prompt_text}  "),
+			("class:note", note),
+			("class:prompt", " ["),
 			("class:to", to_text),
 			("class:prompt", "]> ")
 		]
@@ -335,6 +355,12 @@ if __name__ == "__main__":
 	parser.add_argument('-w', '--translate-word', type=str, help='Translate word')
 	parser.add_argument('-f', '--compound-forms', action='store_true', help='Include compound forms')
 	parser.add_argument('-t', '--translate-text', type=str, help='Translate text')
+	# parser.add_argument(
+	# 	'--category',
+	# 	type=str.lower,
+	# 	choices=["adjectives", "nouns", "verbs", "any"],
+	# 	help="Word type"
+	# )
 	args = parser.parse_args()
 
 	# print(args)
