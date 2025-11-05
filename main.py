@@ -18,6 +18,7 @@ from dotenv import load_dotenv
 import argparse
 import sys, os
 import re, random, math, json
+from pathlib import Path
 from unidecode import unidecode
 from wrpy import WordReference
 
@@ -59,8 +60,24 @@ ALMOST_RETRY = True
 
 def train_vocabulary(_from: str, _to: str):
 	wordlist = {}
-	failed_once = set()
+	
+	never_failed = []
+	never_failed_all = {}
 
+	path_cache = os.path.join(str(Path.home()), ".cache/language-learning")
+	never_failed_path = os.path.join(path_cache, "never_failed.json")
+	os.makedirs(path_cache, exist_ok=True)
+
+	try:
+		with open(never_failed_path, "r") as f:
+			never_failed_all = json.load(f)
+		# print(never_failed_all)
+		if (_from+_to) in never_failed_all:
+			never_failed = never_failed_all[_from+_to]
+	except FileNotFoundError:
+		pass
+
+	print(never_failed)
 	with open(os.path.join(os.path.dirname(__file__), "most-common-words-multilingual/data/wordfrequency.info", _from+".txt"), "r") as ff:
 		with open(os.path.join(os.path.dirname(__file__), "most-common-words-multilingual/data/wordfrequency.info", _to+".txt"), "r") as ft:
 			wordlist = {
@@ -71,7 +88,7 @@ def train_vocabulary(_from: str, _to: str):
 			wordlist = {
 				k: v
 				for k, v in wordlist.items()
-				if len(k) > 2 and len(v) > 2
+				if len(k) > 2 and len(v) > 2 and k not in never_failed
 			}
 
 	from_colour = str_to_shell_colour(_from)
@@ -140,8 +157,10 @@ def train_vocabulary(_from: str, _to: str):
 				# print(count, almost)
 				if lword == re.sub(r"^(el|le|la|un(a|e)?|du) ", "", luser):
 					print("\x1b[1;32m\u2714 Correct !\x1b[0m")
+					never_failed.append(word)
 				elif ulword == uluser:
 					print(f"\x1b[1;33m\u2714 Typo\x1b[0m      {word:>{PADDING}s} = {wordlist[word]}")
+					never_failed.append(word)
 				elif count <= almost:
 					print(f"\x1b[1;33m  Almost!\x1b[0m")
 					retry = True
@@ -149,6 +168,9 @@ def train_vocabulary(_from: str, _to: str):
 					print(f"\x1b[1;31m\u2a2f Incorrect\x1b[0m {word:>{PADDING}s} = {wordlist[word]}")
 		print()
 
+	with open(never_failed_path, 'w') as f:
+		never_failed_all[_from+_to] = never_failed
+		json.dump(never_failed_all, f)
 
 from prompt_toolkit.application import Application
 from prompt_toolkit.key_binding import KeyBindings
