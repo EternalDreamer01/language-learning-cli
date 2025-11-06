@@ -77,7 +77,7 @@ def train_vocabulary(_from: str, _to: str):
 	except FileNotFoundError:
 		pass
 
-	print(never_failed)
+	# print(never_failed)
 	with open(os.path.join(os.path.dirname(__file__), "most-common-words-multilingual/data/wordfrequency.info", _from+".txt"), "r") as ff:
 		with open(os.path.join(os.path.dirname(__file__), "most-common-words-multilingual/data/wordfrequency.info", _to+".txt"), "r") as ft:
 			wordlist = {
