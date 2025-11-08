@@ -44,13 +44,14 @@ PADDING = 16
 HINT_RATIO = 10.0
 ALMOST_RATIO = 15.0
 ALMOST_RETRY = True
+RETRY_FAILED = 3
 
 def train_vocabulary(_from: str, _to: str):
 	wordlist = {}
 	
 	never_failed = []
 	never_failed_all = {}
-	wordlist_failed = set()
+	wordlist_failed = {}
 
 	path_cache = os.path.join(str(Path.home()), ".cache/language-learning")
 	never_failed_path = os.path.join(path_cache, "never_failed.json")
@@ -85,18 +86,27 @@ def train_vocabulary(_from: str, _to: str):
 	if from_colour == to_colour:
 		from_colour = "bold #000000"
 
+	def step_word():
+		nonlocal wordlist_failed
+		wordlist_failed = {k: (v - 1 if isinstance(v, (int, float)) else v) for k, v in wordlist_failed.items()}
+
 	def user_succeed(w: str):
+		nonlocal wordlist_failed
 		# never_failed.append(w)
-		wordlist_failed.discard(w)
+		wordlist_failed.pop(w, None)
 
 	def user_failed(w: str):
-		wordlist_failed.add(w)
+		nonlocal wordlist_failed
+		wordlist_failed[w] = RETRY_FAILED
+
+	def choose_word() -> str:
+		return next((k for k, v in wordlist_failed.items() if v <= 0), random.choice(list(wordlist.keys())))
 
 	note = ""
 
 	continue_training = True
 	while continue_training:
-		word = "femme" # random.choice(list(wordlist.keys()))
+		word = choose_word()
 
 		# if not " " in word:
 		# 	continue
@@ -143,6 +153,7 @@ def train_vocabulary(_from: str, _to: str):
 
 			elif not user_answer:
 				print(f"            {word:>{PADDING}s} = {wordlist[word]}{note}")
+				user_failed(word)
 
 			else:
 				luser = user_answer.lower()
@@ -171,6 +182,7 @@ def train_vocabulary(_from: str, _to: str):
 				else:
 					print(f"\x1b[1;31m\u2a2f Incorrect\x1b[0m {word:>{PADDING}s} = {wordlist[word]}{note}")
 					user_failed(word)
+		step_word()
 		print()
 
 	with open(never_failed_path, 'w') as f:
