@@ -92,9 +92,11 @@ def train_vocabulary(_from: str, _to: str):
 	def user_failed(w: str):
 		wordlist_failed.add(w)
 
+	note = ""
+
 	continue_training = True
 	while continue_training:
-		word = random.choice(list(wordlist.keys()))
+		word = "femme" # random.choice(list(wordlist.keys()))
 
 		# if not " " in word:
 		# 	continue
@@ -124,6 +126,9 @@ def train_vocabulary(_from: str, _to: str):
 					visible_slots[global_idx] = lword[global_idx]
 					remaining -= 1
 
+		if _to.upper() in TRANSCRIPT_LAYOUT_COUNTRY_CODE:
+			note = f" (\x1b[3m{transcript_latin(wordlist[word])}\x1b[0m)"
+
 		retry = True
 		while continue_training and retry:
 			user_answer = None
@@ -137,7 +142,7 @@ def train_vocabulary(_from: str, _to: str):
 				continue_training = False
 
 			elif not user_answer:
-				print(f"            {word:>{PADDING}s} = {wordlist[word]}")
+				print(f"            {word:>{PADDING}s} = {wordlist[word]}{note}")
 
 			else:
 				luser = user_answer.lower()
@@ -152,11 +157,11 @@ def train_vocabulary(_from: str, _to: str):
 				almost = 1 + (len(ulword) / HINT_RATIO)
 
 				if lword == re.sub(r"^(el|le|la|un(a|e)?|du) ", "", luser):
-					print("\x1b[1;32m\u2714 Correct !\x1b[0m")
+					print(f"\x1b[1;32m\u2714 Correct !\x1b[0m{note}")
 					user_succeed(word)
 
 				elif ulword == uluser:
-					print(f"\x1b[1;33m\u2714 Typo\x1b[0m      {word:>{PADDING}s} = {wordlist[word]}")
+					print(f"\x1b[1;33m\u2714 Typo\x1b[0m      {word:>{PADDING}s} = {wordlist[word]}{note}")
 					user_succeed(word)
 
 				elif count <= almost:
@@ -164,7 +169,7 @@ def train_vocabulary(_from: str, _to: str):
 					retry = True
 
 				else:
-					print(f"\x1b[1;31m\u2a2f Incorrect\x1b[0m {word:>{PADDING}s} = {wordlist[word]}")
+					print(f"\x1b[1;31m\u2a2f Incorrect\x1b[0m {word:>{PADDING}s} = {wordlist[word]}{note}")
 					user_failed(word)
 		print()
 

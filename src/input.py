@@ -84,7 +84,38 @@ def transcript_get_char(d: str | tuple) -> str:
 		return d[0]
 	return d
 
-TRANSCRIPT_LAYOUT_COUNTRY_CODE = ["uk", "ru"]
+def transcript_latin(s: str) -> str:
+    result = ""
+    for c in s:
+        found = False
+
+        # Check top-level mappings
+        for k, v in TRANSCRIPT_LAYOUT.items():
+            if isinstance(v, str) and v == c:
+                result += k
+                found = True
+                break
+            elif isinstance(v, dict):
+                # Check nested mappings
+                for sub_k, sub_v in v.items():
+                    if isinstance(sub_v, str) and sub_v == c:
+                        result += k + sub_k
+                        found = True
+                        break
+                    elif isinstance(sub_v, tuple):
+                        if sub_v[0] == c:  # Cyrillic letter match
+                            result += sub_v[1]  # Use the 2nd element (Latin)
+                            found = True
+                            break
+                if found:
+                    break
+
+        if not found:
+            result += c  # Keep unknown characters as-is
+
+    return result
+
+TRANSCRIPT_LAYOUT_COUNTRY_CODE = ["UK", "RU"]
 DEFAULT_CHAR = -1
 
 
@@ -117,6 +148,8 @@ def slot_input(from_colour: str, to_colour: str, from_text: str, to_text: str, p
 		# "filled": "#00ff00",
 		# "empty": "#ffffff",
         "highlight": "bold #00dd00",
+        "note": "italic",
+        
 	})
 
 	# dynamic content
@@ -137,6 +170,9 @@ def slot_input(from_colour: str, to_colour: str, from_text: str, to_text: str, p
 				fragments.append(("class:filled", entered[i]))
 			else:
 				fragments.append(("class:empty", "▉"))
+		if entered and to_text in TRANSCRIPT_LAYOUT_COUNTRY_CODE:
+			fragments.append(("class:normal", ", "))
+			fragments.append(("class:note", transcript_latin(entered)))
 		return fragments
 
 	control = FormattedTextControl(get_display, show_cursor=False)
@@ -181,7 +217,7 @@ def slot_input(from_colour: str, to_colour: str, from_text: str, to_text: str, p
 		nonlocal special_char
 		if event.data not in ALWAYS_VISIBLE and len(entered) < length and event.data.isprintable():
 			# print(to_text.upper(), TRANSCRIPT_LAYOUT_COUNTRY_CODE)
-			if to_text.lower() in TRANSCRIPT_LAYOUT_COUNTRY_CODE:
+			if to_text in TRANSCRIPT_LAYOUT_COUNTRY_CODE:
 				# print("Transcripting")
 				if special_char != DEFAULT_CHAR:
 					if event.data in TRANSCRIPT_LAYOUT[special_char]:
