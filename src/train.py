@@ -44,7 +44,7 @@ PADDING = 16
 HINT_RATIO = 10.0
 ALMOST_RATIO = 15.0
 ALMOST_RETRY = True
-RETRY_FAILED = 3
+RETRY_FAILED = 5
 
 def train_vocabulary(_from: str, _to: str):
 	wordlist = {}
@@ -93,6 +93,7 @@ def train_vocabulary(_from: str, _to: str):
 	def user_succeed(w: str):
 		nonlocal wordlist_failed
 		# never_failed.append(w)
+		wordlist.pop(w, None)
 		wordlist_failed.pop(w, None)
 
 	def user_failed(w: str):
@@ -108,7 +109,7 @@ def train_vocabulary(_from: str, _to: str):
 	while continue_training:
 		word = choose_word()
 
-		# if not " " in word:
+		# if "'" not in word:
 		# 	continue
 
 		lword = wordlist[word].strip().lower()
@@ -168,7 +169,7 @@ def train_vocabulary(_from: str, _to: str):
 				almost = 1 + (len(ulword) / HINT_RATIO)
 
 				if lword == re.sub(r"^(el|le|la|un(a|e)?|du) ", "", luser):
-					print(f"\x1b[1;32m\u2714 Correct !\x1b[0m{note}")
+					print(f"\x1b[1;32m\u2714 Correct !\x1b[0m")
 					user_succeed(word)
 
 				elif ulword == uluser:
