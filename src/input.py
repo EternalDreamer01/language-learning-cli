@@ -1,14 +1,14 @@
 #!/usr/bin/python3
 ################################################################################
-# @file      input.py
-# @brief     
-# @date      Fr Nov 2025
-# @author    Dimitri Simon
+# @file	  input.py
+# @brief	 
+# @date	  Fr Nov 2025
+# @author	Dimitri Simon
 # 
 # PROJECT:   language-learning-cli
 # 
 # MODIFIED:  Fri Nov 07 2025
-# BY:        Dimitri Simon
+# BY:		Dimitri Simon
 # 
 # Copyright (c) 2025 Dimitri Simon
 # 
@@ -37,12 +37,12 @@ ACCENT = {
 }
 TRANSCRIPT_CHAR = "<>&~:°"
 TRANSCRIPT_LAYOUT = {
-    "a": "а",
-    "b": "б",
-    "v": "в",
-    "g": "г",
-    "d": "д",
-    # "e": ("e", "ye"),
+	"a": "а",
+	"b": "б",
+	"v": "в",
+	"g": "г",
+	"d": "д",
+	# "e": ("e", "ye"),
 	# ":": ("ё", "yo"),
 	"j": "ж",
 	"z": "з",
@@ -51,9 +51,11 @@ TRANSCRIPT_LAYOUT = {
 	"l": "л",
 	"m": "м",
 	"n": "н",
+	"o": "о",
 	"p": "п",
 	"r": "р",
 	"s": "с",
+	"c": "с",
 	"u": "у",
 	"f": "ф",
 	"x": "х",
@@ -67,7 +69,7 @@ TRANSCRIPT_LAYOUT = {
 		"h": ("щ", "sch")
 	},
 	"t": {
-		"t": "т",
+		"t": ("т", "t"),
 		"s": "ц"
 	},
 	"y": {
@@ -85,35 +87,33 @@ def transcript_get_char(d: str | tuple) -> str:
 	return d
 
 def transcript_latin(s: str) -> str:
-    result = ""
-    for c in s:
-        found = False
+	result = ""
+	for c in s:
+		found = False
 
-        # Check top-level mappings
-        for k, v in TRANSCRIPT_LAYOUT.items():
-            if isinstance(v, str) and v == c:
-                result += k
-                found = True
-                break
-            elif isinstance(v, dict):
-                # Check nested mappings
-                for sub_k, sub_v in v.items():
-                    if isinstance(sub_v, str) and sub_v == c:
-                        result += k + sub_k
-                        found = True
-                        break
-                    elif isinstance(sub_v, tuple):
-                        if sub_v[0] == c:  # Cyrillic letter match
-                            result += sub_v[1]  # Use the 2nd element (Latin)
-                            found = True
-                            break
-                if found:
-                    break
+		for k, v in TRANSCRIPT_LAYOUT.items():
+			if isinstance(v, str) and v == c:
+				result += k
+				found = True
+				break
+			elif isinstance(v, dict):
+				for sub_k, sub_v in v.items():
+					if isinstance(sub_v, str) and sub_v == c:
+						result += k + sub_k
+						found = True
+						break
+					elif isinstance(sub_v, tuple):
+						if sub_v[0] == c:  # Cyrillic letter match
+							result += sub_v[1]  # Use the 2nd element (Latin)
+							found = True
+							break
+				if found:
+					break
 
-        if not found:
-            result += c  # Keep unknown characters as-is
+		if not found:
+			result += c  # Keep unknown characters as-is
 
-    return result
+	return result
 
 TRANSCRIPT_LAYOUT_COUNTRY_CODE = ["UK", "RU"]
 DEFAULT_CHAR = -1
@@ -147,16 +147,16 @@ def slot_input(from_colour: str, to_colour: str, from_text: str, to_text: str, p
 		# "prompt": "#00ffff bold",
 		# "filled": "#00ff00",
 		# "empty": "#ffffff",
-        "highlight": "bold #00dd00",
-        "note": "italic",
-        
+		"highlight": "bold #00dd00",
+		"note": "italic",
+		
 	})
 
 	# dynamic content
 	def get_display():
 		fragments = [
-      		("class:prompt", "["),
-        	("class:from", from_text),
+	  		("class:prompt", "["),
+			("class:from", from_text),
 			("class:prompt", f"] {prompt_text}  ["),
 			("class:to", to_text),
 			("class:prompt", "]> ")
@@ -215,7 +215,7 @@ def slot_input(from_colour: str, to_colour: str, from_text: str, to_text: str, p
 	def _(event):
 		nonlocal entered
 		nonlocal special_char
-		if event.data not in ALWAYS_VISIBLE and len(entered) < length and event.data.isprintable():
+		if len(entered) < length and event.data.isprintable():
 			# print(to_text.upper(), TRANSCRIPT_LAYOUT_COUNTRY_CODE)
 			if to_text in TRANSCRIPT_LAYOUT_COUNTRY_CODE:
 				# print("Transcripting")
