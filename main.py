@@ -23,6 +23,7 @@ if __name__ == "__main__":
 	parser = argparse.ArgumentParser(prog="language-learning-cli", description="A CLI tool for language learning.")
 	parser.add_argument('FROM', nargs="?")
 	parser.add_argument('TO', nargs="?")
+	parser.add_argument('WORD', nargs="?")
 	parser.add_argument('-c', '--conjugation', action='store_true', help='Conjugate verbs')
 	parser.add_argument('-w', '--translate-word', type=str, help='Translate word')
 	parser.add_argument('-f', '--compound-forms', action='store_true', help='Include compound forms')
@@ -42,7 +43,7 @@ if __name__ == "__main__":
 		sys.exit(1)
 
 	if args.conjugation:
-		# conjugation_table(_from, _to)
+		conjugation_table(_from, _to, args.WORD)
 		pass
 	elif args.translate_word:
 		translate_word(_from, _to, args.translate_word, args.compound_forms)
