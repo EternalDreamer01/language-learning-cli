@@ -1,7 +1,7 @@
 
 # Language Learning CLI
 
-Learn language vocabulary through CLI.
+Learn languages through CLI.
 
 | Feature           | Languages | Works offline | Powered by |
 |:-                 |:-         |:-             |:-          |
