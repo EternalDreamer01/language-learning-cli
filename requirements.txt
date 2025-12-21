@@ -2,3 +2,4 @@ wrpy
 dotenv
 unidecode
 prompt_toolkit
+python-benedict[all]
