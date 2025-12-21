@@ -25,7 +25,7 @@ if __name__ == "__main__":
 	parser.add_argument('TO', nargs="?")
 	parser.add_argument('WORD', nargs="?")
 	parser.add_argument('-c', '--conjugation', action='store_true', help='Conjugate verbs')
-	parser.add_argument('-w', '--translate-word', type=str, help='Translate word')
+	parser.add_argument('-w', '--translate-word', action='store_true', help='Translate word')
 	parser.add_argument('-f', '--compound-forms', action='store_true', help='Include compound forms')
 	parser.add_argument('-t', '--translate-text', type=str, help='Translate text')
 	args = parser.parse_args()
@@ -36,17 +36,16 @@ if __name__ == "__main__":
 
 	_from = (os.getenv("DEFAULT_LANGUAGE_FROM", "en") if args.FROM is None else args.FROM).strip().lower()
 	_to = (os.getenv("DEFAULT_LANGUAGE_TO", "es") if args.TO is None else args.TO).strip().lower()
-	# wr
-
-	if _from == _to:
-		print("FROM and TO are the same language", file=sys.stderr)
-		sys.exit(1)
 
 	if args.conjugation:
 		conjugation_table(_from, _to, args.WORD)
-		pass
+
+	elif _from == _to:
+		print("FROM and TO are the same language", file=sys.stderr)
+		sys.exit(1)
+
 	elif args.translate_word:
-		translate_word(_from, _to, args.translate_word, args.compound_forms)
+		translate_word(_from, _to, args.WORD, args.compound_forms)
 		# print(json.dumps(WordReference(_from, _to).translate(args.translate_word)))
 	else:
 		train_vocabulary(_from, _to)
