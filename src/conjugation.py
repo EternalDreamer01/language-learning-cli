@@ -112,20 +112,20 @@ def conjugation_table(_from: str, _to: str, verb: str | None = None, time: str|N
 		sys.exit(1)
 
 # Get conjugation in source language
-	verb_from = translate_word(_to, _from, verb, get_first_string=True)
-	language = short_names[_from] or _from
+	# verb_from = translate_word(_to, _from, verb, get_first_string=True)
+	# language = short_names[_from] or _from
 
-	d = requests.get(
-		f"https://conjugator.reverso.net/conjugation-{language}-verb-{verb_from}.html",
-		headers={"User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0"}
-	).text
+	# d = requests.get(
+	# 	f"https://conjugator.reverso.net/conjugation-{language}-verb-{verb_from}.html",
+	# 	headers={"User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0"}
+	# ).text
 
-	data_from = parse_conjugation_data(d)
-	if data_from is None:
-		print(f"Error: Unable to fetch conjugation data for verb '{verb}' in language '{_to}'.", file=sys.stderr)
-		sys.exit(1)
+	# data_from = {"": None, "": None, "": None, "": None, "": None, "": None, "": None, "": None, "": None, "": None, "": None, "": None} # parse_conjugation_data(d)
+	# if data_from is None:
+	# 	print(f"Error: Unable to fetch conjugation data for verb '{verb}' in language '{_to}'.", file=sys.stderr)
+	# 	sys.exit(1)
 
-	for (mood, v), (mood_from, v2) in zip(data.items(), data_from.items()):
+	for mood in data:
 	# for mood in data:
 		# print(mood.upper())
 		for t in data[mood]:
