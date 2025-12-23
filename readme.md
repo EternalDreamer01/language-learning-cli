@@ -6,8 +6,8 @@ Learn languages through CLI.
 | Feature           | Languages | Works offline | Powered by |
 |:-                 |:-         |:-             |:-          |
 | Train vocabulary  | 9  : Romance languages $^1$, Slavic languages $^2$  | ✅  | [frekwencja/most-common-words-multilingual](https://github.com/frekwencja/most-common-words-multilingual) |
-| Translation       | 43 : Romance languages $^1$, Languages of Asia $^3$ | ❌  | [`wrpy`](https://pypi.org/project/wrpy/) (WordReference) |
-| Conjugation table | 6  : Romance languages $^1$ except English          | ❌  | [verbe.cc](https://verbe.cc/) |
+| Translation       | 43 : Romance languages $^1$, Russian, Languages of Asia $^3$ | ❌  | [`wrpy`](https://github.com/sdelquin/wrpy) (WordReference) |
+| Conjugation table | 6  : Romance languages $^1$ except English          | ❌  | [Reverso](https://conjugator.reverso.net/) |
 
 - 1: English, French, Italian, Spanish, Portuguese, Romanian, Catalan
 - 2: Ukrainian, Russian

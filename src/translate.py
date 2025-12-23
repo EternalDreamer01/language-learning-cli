@@ -23,7 +23,7 @@ WORD_CONTEXT_ADJUST = 28
 WORD_FROM_ADJUST_FULL = 25
 WORD_FROM_ADJUST = WORD_FROM_ADJUST_FULL - 10
 
-def translate_word(_from: str, _to: str, word: str, compound_forms: bool = False):
+def translate_word(_from: str, _to: str, word: str, compound_forms: bool = False, get_first_string: bool = False):
 	data = {}
 	changed_to_english = False
 	while not data:
@@ -42,6 +42,13 @@ def translate_word(_from: str, _to: str, word: str, compound_forms: bool = False
 
 	if changed_to_english:
 		print(f"\x1b[31m  changed to '{_from} <> {_to}' instead\x1b[0m\n")
+
+	if get_first_string:
+		if data["translations"] and data["translations"][0]["entries"]:
+			first_entry = data["translations"][0]["entries"][0]
+			if first_entry["to_word"]:
+				return first_entry["to_word"][0]["meaning"]
+		return None
 
 	def show_unique(translation: dict):
 		if translation['notes'] is not None:
