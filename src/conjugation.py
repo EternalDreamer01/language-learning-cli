@@ -15,6 +15,7 @@
 ################################################################################
 
 import sys
+from benedict import benedict
 from rich.console import Console
 from rich.table import Table
 from .translate import translate_word
@@ -50,50 +51,122 @@ def parse_conjugation_data(html_string):
 		result = {}
 		last_mood = None
 		
-		# Find all mood sections (h4 tags contain mood names)
-		for mood_header in soup.find_all('div', class_='word-wrap-row'):
-			# mood = mood_header.get_text(strip=True)
+		for row in soup.find_all('div', class_='word-wrap-row'):
+			cols = row.find_all('div', class_='wrap-three-col')
 			
-			# Find parent container of this mood
-			mood = mood_header.find('h4')
-			if not mood:
-				mood = last_mood
-				result[mood].append({})
-			else:
-				mood = mood.get_text(strip=True)
-				last_mood = mood
-
-				result[mood] = [{}]
-
-			# print()
-			# print(mood)
+			# Check if row has row-level h4 (only use if NO columns have h4s)
+			row_h4_div = row.find('div', class_='word-wrap-title')
+			has_col_h4 = any(col.find('div', class_='word-wrap-title') for col in cols)
 			
-			# Find all tense boxes within this mood
-			for tense_box in mood_header: #.find_all('div', class_='blue-box-wrap'):
-				tense_title = tense_box.find('p')
-				if tense_title:
-					tense = tense_title.get_text(strip=True)
-					# print("  " +tense)
-					# print(tense_box)
-					result[mood][-1][tense] = {}
+			if row_h4_div and not has_col_h4:
+				h4_elem = row_h4_div.find('h4')
+				if h4_elem:
+					last_mood = h4_elem.get_text(strip=True)
+			
+			for col in cols:
+				col_h4_div = col.find('div', class_='word-wrap-title')
+				col_mood = None
+				if col_h4_div:
+					h4_elem = col_h4_div.find('h4')
+					if h4_elem:
+						col_mood = h4_elem.get_text(strip=True)
+						last_mood = col_mood
+				
+				current_mood = col_mood if col_mood else last_mood
+				
+				if current_mood is None:
+					continue
+				
+				for tense_box in col.find_all('div', class_='blue-box-wrap', recursive=False):
+					if current_mood not in result:
+						result[current_mood] = {}
 					
-					# Extract pronouns and conjugations from list items
+					tense_title = tense_box.find('p')
+					tense = tense_title.get_text(strip=True) if tense_title else current_mood
+					
+					result[current_mood][tense] = {}
+					
 					for li in tense_box.find_all('li'):
-						# print(li)
-						# Split by italic tags
 						pronoun = ''.join(it.get_text() for it in li.find_all('i', class_="particletxt") + li.find_all('i', class_="graytxt"))
 						conj = ''.join(it.get_text() for it in li.find_all('i', class_="auxgraytxt") + li.find_all('i', class_="verbtxt"))
-						# print(items)
-						# if len(items) >= 2:
-						# 	pronoun = items[0].get_text().strip()
-						# 	conjugation = ''.join(it.get_text() for it in items[1:])  # Last i tag has the verb form
-						result[mood][-1][tense][pronoun] = conj
-		return result
-	except AttributeError:
+						result[current_mood][tense][pronoun.replace(".", "")] = conj
+		
+		return benedict(result)
+	except (AttributeError, TypeError):
+		print("error")
 		pass
 
+
+CONJUGATION_LIST = {
+	"en": {
+		"indicative.present.simple": "Indicative.Present",
+		"indicative.present.continuous": "Indicative.Present continuous",
+		"indicative.present.perfect.simple": "Indicative.Present perfect",
+		"indicative.present.perfect.continuous": "Indicative.Present perfect continuous",
+
+		"indicative.future.simple": "Indicative.Future",
+		"indicative.future.continuous": "Indicative.Future continuous",
+		"indicative.future.perfect.simple": "Indicative.Future perfect",
+		"indicative.future.perfect.continuous": "Indicative.Future perfect continuous",
+
+		"indicative.preterite": "Indicative.Preterite",
+		"indicative.past.continuous": "Indicative.Past continuous",
+		"indicative.past.perfect.simple": "Indicative.Past perfect",
+		"indicative.past.perfect.continuous": "Indicative.Past perfect continuous",
+	},
+	"es": {
+		"indicativo": {
+			"presente": "Indicativo.Presente",
+			"futuro.simple": "Indicativo.Futuro",
+			"futuro.perfecto": "Indicativo.Futuro perfecto",
+	
+			"pretérito.imperfecto": "Indicativo.Pretérito imperfecto",
+			"pretérito.perfecto": "Indicativo.Pretérito perfecto compuesto",
+			"pretérito.pluscuamperfecto": "Indicativo.Pretérito pluscuamperfecto",
+			"pretérito.anterior": "Indicativo.Pretérito anterior",
+   
+			"condicional.simple": "Indicativo.Condicional",
+			"condicional.perfecto": "Indicativo.Condicional perfecto",
+		},
+		"Subjonctivo": {
+			"presente": "Subjonctivo.Presente",
+			"futuro.simple": "Subjonctivo.Futuro",
+			"futuro.perfecto": "Subjonctivo.Futuro perfecto",
+
+			"pretérito.imperfecto": [
+				"Subjonctivo.Pretérito imperfecto",
+				"Subjonctivo.Pretérito imperfecto (2)",
+			],
+			"pretérito.perfecto": "Subjonctivo.Pretérito perfecto simple",
+			"pretérito.pluscuamperfecto": [
+				"Subjonctivo.Pretérito pluscuamperfecto",
+				"Subjonctivo.Pretérito pluscuamperfecto (2)",
+			]
+		}
+	},
+	"fr": {
+		"indicatif": {
+			"présent": "Indicatif.Présent",
+			"futur.simple": "Indicatif.Futur",
+			"futur.antérieur": "Indicatif.Futur antérieur",
+
+			"imparfait": "Indicatif.Imparfait",
+			"passé.simple": "Indicatif.Passé simple",
+			"plus-que-parfait": "Indicatif.Plus-que-parfait",
+			"passé.antérieur": "Indicatif.Passé antérieur",
+
+			"conditionnel.présent": "Indicatif.Conditionnel présent",
+			"conditionnel.passé": "Indicatif.Conditionnel passé",
+		}
+	}
+}
+
+__data = """
+<div id="ch_divSimple" class="word-wrap-simple"><div class="result-block-api"><div class="word-wrap-row"><div class="word-wrap-title"><h4>Indicativo</h4></div><div class="wrap-three-col"><div class="blue-box-wrap" mobile-title="Indicativo Presente"><p>Presente</p><ul class="wrap-verbs-listing"><li><i class="graytxt">yo </i><i class="verbtxt">tengo</i></li><li><i class="graytxt">tú </i><i class="verbtxt">tienes</i></li><li><i class="graytxt">él/ella/Ud. </i><i class="verbtxt">tiene</i></li><li><i class="graytxt">nosotros </i><i class="verbtxt">tenemos</i></li><li><i class="graytxt">vosotros </i><i class="verbtxt">tenéis</i></li><li><i class="graytxt">ellos/ellas/Uds. </i><i class="verbtxt">tienen</i></li></ul></div></div><div class="wrap-three-col"><div class="blue-box-wrap" mobile-title="Indicativo Futuro"><p>Futuro</p><ul class="wrap-verbs-listing"><li><i class="graytxt">yo </i><i class="verbtxt">tendré</i></li><li><i class="graytxt">tú </i><i class="verbtxt">tendrás</i></li><li><i class="graytxt">él/ella/Ud. </i><i class="verbtxt">tendrá</i></li><li><i class="graytxt">nosotros </i><i class="verbtxt">tendremos</i></li><li><i class="graytxt">vosotros </i><i class="verbtxt">tendréis</i></li><li><i class="graytxt">ellos/ellas/Uds. </i><i class="verbtxt">tendrán</i></li></ul></div></div><div class="wrap-three-col"><div class="blue-box-wrap" mobile-title="Indicativo Pretérito imperfecto"><p>Pretérito imperfecto</p><ul class="wrap-verbs-listing"><li><i class="graytxt" style="">yo </i><i class="verbtxt" style="">tenía</i></li><li><i class="graytxt" style="">tú </i><i class="verbtxt" style="">tenías</i></li><li><i class="graytxt" style="">él/ella/Ud. </i><i class="verbtxt" style="">tenía</i></li><li><i class="graytxt">nosotros </i><i class="verbtxt">teníamos</i></li><li><i class="graytxt">vosotros </i><i class="verbtxt">teníais</i></li><li><i class="graytxt">ellos/ellas/Uds. </i><i class="verbtxt">tenían</i></li></ul></div></div></div><div class="word-wrap-row"><div class="wrap-three-col" c="1"><div class="blue-box-wrap" mobile-title="Indicativo Pretérito perfecto compuesto"><p>Pretérito perfecto compuesto</p><ul class="wrap-verbs-listing"><li><i class="graytxt">yo </i><i class="auxgraytxt">he </i><i class="verbtxt">tenido</i></li><li><i class="graytxt">tú </i><i class="auxgraytxt">has </i><i class="verbtxt">tenido</i></li><li><i class="graytxt">él/ella/Ud. </i><i class="auxgraytxt">ha </i><i class="verbtxt">tenido</i></li><li><i class="graytxt">nosotros </i><i class="auxgraytxt">hemos </i><i class="verbtxt">tenido</i></li><li><i class="graytxt">vosotros </i><i class="auxgraytxt">habéis </i><i class="verbtxt">tenido</i></li><li><i class="graytxt">ellos/ellas/Uds. </i><i class="auxgraytxt">han </i><i class="verbtxt">tenido</i></li></ul></div></div><div class="wrap-three-col" c="1"><div class="blue-box-wrap" mobile-title="Indicativo Pretérito pluscuamperfecto"><p>Pretérito pluscuamperfecto</p><ul class="wrap-verbs-listing"><li><i class="graytxt">yo </i><i class="auxgraytxt">había </i><i class="verbtxt">tenido</i></li><li><i class="graytxt">tú </i><i class="auxgraytxt">habías </i><i class="verbtxt">tenido</i></li><li><i class="graytxt">él/ella/Ud. </i><i class="auxgraytxt">había </i><i class="verbtxt">tenido</i></li><li><i class="graytxt">nosotros </i><i class="auxgraytxt">habíamos </i><i class="verbtxt">tenido</i></li><li><i class="graytxt">vosotros </i><i class="auxgraytxt">habíais </i><i class="verbtxt">tenido</i></li><li><i class="graytxt">ellos/ellas/Uds. </i><i class="auxgraytxt">habían </i><i class="verbtxt">tenido</i></li></ul></div></div><div class="wrap-three-col" c="1"><div class="blue-box-wrap" mobile-title="Indicativo Pretérito anterior"><p>Pretérito anterior</p><ul class="wrap-verbs-listing"><li><i class="graytxt">yo </i><i class="auxgraytxt">hube </i><i class="verbtxt">tenido</i></li><li><i class="graytxt">tú </i><i class="auxgraytxt">hubiste </i><i class="verbtxt">tenido</i></li><li><i class="graytxt">él/ella/Ud. </i><i class="auxgraytxt">hubo </i><i class="verbtxt">tenido</i></li><li><i class="graytxt">nosotros </i><i class="auxgraytxt">hubimos </i><i class="verbtxt">tenido</i></li><li><i class="graytxt">vosotros </i><i class="auxgraytxt">hubisteis </i><i class="verbtxt">tenido</i></li><li><i class="graytxt">ellos/ellas/Uds. </i><i class="auxgraytxt">hubieron </i><i class="verbtxt">tenido</i></li></ul></div></div></div><div class="word-wrap-row"><div class="wrap-three-col" c="1"><div class="blue-box-wrap" mobile-title="Indicativo Futuro perfecto"><p>Futuro perfecto</p><ul class="wrap-verbs-listing"><li><i class="graytxt">yo </i><i class="auxgraytxt">habré </i><i class="verbtxt">tenido</i></li><li><i class="graytxt">tú </i><i class="auxgraytxt">habrás </i><i class="verbtxt">tenido</i></li><li><i class="graytxt">él/ella/Ud. </i><i class="auxgraytxt">habrá </i><i class="verbtxt">tenido</i></li><li><i class="graytxt">nosotros </i><i class="auxgraytxt">habremos </i><i class="verbtxt">tenido</i></li><li><i class="graytxt">vosotros </i><i class="auxgraytxt">habréis </i><i class="verbtxt">tenido</i></li><li><i class="graytxt">ellos/ellas/Uds. </i><i class="auxgraytxt">habrán </i><i class="verbtxt">tenido</i></li></ul></div></div><div class="wrap-three-col" c="1"><div class="blue-box-wrap" mobile-title="Indicativo Condicional perfecto"><p>Condicional perfecto</p><ul class="wrap-verbs-listing"><li><i class="graytxt">yo </i><i class="auxgraytxt">habría </i><i class="verbtxt">tenido</i></li><li><i class="graytxt">tú </i><i class="auxgraytxt">habrías </i><i class="verbtxt">tenido</i></li><li><i class="graytxt">él/ella/Ud. </i><i class="auxgraytxt">habría </i><i class="verbtxt">tenido</i></li><li><i class="graytxt">nosotros </i><i class="auxgraytxt">habríamos </i><i class="verbtxt">tenido</i></li><li><i class="graytxt">vosotros </i><i class="auxgraytxt">habríais </i><i class="verbtxt">tenido</i></li><li><i class="graytxt">ellos/ellas/Uds. </i><i class="auxgraytxt">habrían </i><i class="verbtxt">tenido</i></li></ul></div></div><div class="wrap-three-col"><div class="blue-box-wrap" mobile-title="Indicativo Condicional"><p>Condicional</p><ul class="wrap-verbs-listing"><li><i class="graytxt">yo </i><i class="verbtxt">tendría</i></li><li><i class="graytxt">tú </i><i class="verbtxt">tendrías</i></li><li><i class="graytxt">él/ella/Ud. </i><i class="verbtxt">tendría</i></li><li><i class="graytxt">nosotros </i><i class="verbtxt">tendríamos</i></li><li><i class="graytxt">vosotros </i><i class="verbtxt">tendríais</i></li><li><i class="graytxt">ellos/ellas/Uds. </i><i class="verbtxt">tendrían</i></li></ul></div></div></div><div class="word-wrap-row"><div class="wrap-three-col" style="margin-top: 32px;"><div class="blue-box-wrap" mobile-title="Indicativo Pretérito perfecto simple"><p>Pretérito perfecto simple</p><ul class="wrap-verbs-listing"><li><i class="graytxt">yo </i><i class="verbtxt">tuve</i></li><li><i class="graytxt">tú </i><i class="verbtxt">tuviste</i></li><li><i class="graytxt">él/ella/Ud. </i><i class="verbtxt">tuvo</i></li><li><i class="graytxt">nosotros </i><i class="verbtxt">tuvimos</i></li><li><i class="graytxt">vosotros </i><i class="verbtxt">tuvisteis</i></li><li><i class="graytxt">ellos/ellas/Uds. </i><i class="verbtxt">tuvieron</i></li></ul></div></div><div class="wrap-three-col" style="margin-top: 0px;"><div class="word-wrap-title"><h4>Imperativo </h4></div><div class="blue-box-wrap alt-tense" mobile-title="Imperativo "><ul class="wrap-verbs-listing"><li><i class="verbtxt">ten </i><i class="graytxt">tú</i></li><li><i class="verbtxt">tenga </i><i class="graytxt">él/ella/Ud.</i></li><li><i class="verbtxt">tengamos </i><i class="graytxt">nosotros</i></li><li><i class="verbtxt">tened </i><i class="graytxt">vosotros</i></li><li><i class="verbtxt">tengan </i><i class="graytxt">ellos/ellas/Uds.</i></li></ul></div></div><div class="wrap-three-col" style="margin-top: 0px;"><div class="word-wrap-title"><h4>Subjuntivo</h4></div><div class="blue-box-wrap" mobile-title="Subjuntivo Presente"><p>Presente</p><ul class="wrap-verbs-listing"><li><i class="graytxt" style="">yo </i><i class="verbtxt" style="">tenga</i></li><li><i class="graytxt" style="">tú </i><i class="verbtxt" style="">tengas</i></li><li><i class="graytxt" style="">él/ella/Ud. </i><i class="verbtxt" style="">tenga</i></li><li><i class="graytxt" style="">nosotros </i><i class="verbtxt" style="">tengamos</i></li><li><i class="graytxt" style="">vosotros </i><i class="verbtxt" style="">tengáis</i></li><li><i class="graytxt">ellos/ellas/Uds. </i><i class="verbtxt">tengan</i></li></ul></div></div></div><div class="word-wrap-row"><div class="wrap-three-col"><div class="blue-box-wrap" mobile-title="Subjuntivo Futuro"><p>Futuro</p><ul class="wrap-verbs-listing"><li><i class="graytxt">yo </i><i class="verbtxt">tuviere</i></li><li><i class="graytxt">tú </i><i class="verbtxt">tuvieres</i></li><li><i class="graytxt">él/ella/Ud. </i><i class="verbtxt">tuviere</i></li><li><i class="graytxt">nosotros </i><i class="verbtxt">tuviéremos</i></li><li><i class="graytxt">vosotros </i><i class="verbtxt">tuviereis</i></li><li><i class="graytxt">ellos/ellas/Uds. </i><i class="verbtxt">tuvieren</i></li></ul></div></div><div class="wrap-three-col"><div class="blue-box-wrap" mobile-title="Subjuntivo Pretérito imperfecto"><p>Pretérito imperfecto</p><ul class="wrap-verbs-listing"><li><i class="graytxt">yo </i><i class="verbtxt">tuviera</i></li><li><i class="graytxt">tú </i><i class="verbtxt">tuvieras</i></li><li><i class="graytxt">él/ella/Ud. </i><i class="verbtxt">tuviera</i></li><li><i class="graytxt">nosotros </i><i class="verbtxt">tuviéramos</i></li><li><i class="graytxt">vosotros </i><i class="verbtxt">tuvierais</i></li><li><i class="graytxt">ellos/ellas/Uds. </i><i class="verbtxt">tuvieran</i></li></ul></div></div><div class="wrap-three-col" c="1"><div class="blue-box-wrap" mobile-title="Subjuntivo Pretérito pluscuamperfecto"><p>Pretérito pluscuamperfecto</p><ul class="wrap-verbs-listing"><li><i class="graytxt">yo </i><i class="auxgraytxt">hubiera </i><i class="verbtxt">tenido</i></li><li><i class="graytxt">tú </i><i class="auxgraytxt">hubieras </i><i class="verbtxt">tenido</i></li><li><i class="graytxt">él/ella/Ud. </i><i class="auxgraytxt">hubiera </i><i class="verbtxt">tenido</i></li><li><i class="graytxt">nosotros </i><i class="auxgraytxt">hubiéramos </i><i class="verbtxt">tenido</i></li><li><i class="graytxt">vosotros </i><i class="auxgraytxt">hubierais </i><i class="verbtxt">tenido</i></li><li><i class="graytxt">ellos/ellas/Uds. </i><i class="auxgraytxt">hubieran </i><i class="verbtxt">tenido</i></li></ul></div></div></div><div class="word-wrap-row"><div class="wrap-three-col" c="1"><div class="blue-box-wrap" mobile-title="Subjuntivo Futuro perfecto"><p>Futuro perfecto</p><ul class="wrap-verbs-listing"><li><i class="graytxt">yo </i><i class="auxgraytxt">hubiere </i><i class="verbtxt">tenido</i></li><li><i class="graytxt">tú </i><i class="auxgraytxt">hubieres </i><i class="verbtxt">tenido</i></li><li><i class="graytxt">él/ella/Ud. </i><i class="auxgraytxt">hubiere </i><i class="verbtxt">tenido</i></li><li><i class="graytxt">nosotros </i><i class="auxgraytxt">hubiéremos </i><i class="verbtxt">tenido</i></li><li><i class="graytxt">vosotros </i><i class="auxgraytxt">hubiereis </i><i class="verbtxt">tenido</i></li><li><i class="graytxt">ellos/ellas/Uds. </i><i class="auxgraytxt">hubieren </i><i class="verbtxt">tenido</i></li></ul></div></div><div class="wrap-three-col"><div class="blue-box-wrap" mobile-title="Subjuntivo Pretérito imperfecto (2)"><p>Pretérito imperfecto (2)</p><ul class="wrap-verbs-listing"><li><i class="graytxt">yo </i><i class="verbtxt">tuviese</i></li><li><i class="graytxt">tú </i><i class="verbtxt">tuvieses</i></li><li><i class="graytxt">él/ella/Ud. </i><i class="verbtxt">tuviese</i></li><li><i class="graytxt">nosotros </i><i class="verbtxt">tuviésemos</i></li><li><i class="graytxt">vosotros </i><i class="verbtxt">tuvieseis</i></li><li><i class="graytxt">ellos/ellas/Uds. </i><i class="verbtxt">tuviesen</i></li></ul></div></div><div class="wrap-three-col" c="1"><div class="blue-box-wrap" mobile-title="Subjuntivo Pretérito pluscuamperfecto (2)"><p>Pretérito pluscuamperfecto (2)</p><ul class="wrap-verbs-listing"><li><i class="graytxt">yo </i><i class="auxgraytxt">hubiese </i><i class="verbtxt">tenido</i></li><li><i class="graytxt">tú </i><i class="auxgraytxt">hubieses </i><i class="verbtxt">tenido</i></li><li><i class="graytxt">él/ella/Ud. </i><i class="auxgraytxt">hubiese </i><i class="verbtxt">tenido</i></li><li><i class="graytxt">nosotros </i><i class="auxgraytxt">hubiésemos </i><i class="verbtxt">tenido</i></li><li><i class="graytxt">vosotros </i><i class="auxgraytxt">hubieseis </i><i class="verbtxt">tenido</i></li><li><i class="graytxt">ellos/ellas/Uds. </i><i class="auxgraytxt">hubiesen </i><i class="verbtxt">tenido</i></li></ul></div></div></div><div class="word-wrap-row"><div class="wrap-three-col" c="1" style="margin-top: 32px;"><div class="blue-box-wrap" mobile-title="Subjuntivo Pretérito perfecto"><p>Pretérito perfecto</p><ul class="wrap-verbs-listing"><li><i class="graytxt">yo </i><i class="auxgraytxt">haya </i><i class="verbtxt">tenido</i></li><li><i class="graytxt">tú </i><i class="auxgraytxt">hayas </i><i class="verbtxt">tenido</i></li><li><i class="graytxt">él/ella/Ud. </i><i class="auxgraytxt">haya </i><i class="verbtxt">tenido</i></li><li><i class="graytxt">nosotros </i><i class="auxgraytxt">hayamos </i><i class="verbtxt">tenido</i></li><li><i class="graytxt">vosotros </i><i class="auxgraytxt">hayáis </i><i class="verbtxt">tenido</i></li><li><i class="graytxt">ellos/ellas/Uds. </i><i class="auxgraytxt">hayan </i><i class="verbtxt">tenido</i></li></ul></div></div><div class="wrap-three-col" style="margin-top: 0px;"><div class="word-wrap-title"><h4>Gerundio </h4></div><div class="blue-box-wrap alt-tense" mobile-title="Gerundio "><ul class="wrap-verbs-listing top2"><li><i class="verbtxt">teniendo</i></li></ul></div></div><div class="wrap-three-col" c="1" style="margin-top: 0px;"><div class="word-wrap-title"><h4>Gerundio compuesto </h4></div><div class="blue-box-wrap" mobile-title="Gerundio compuesto "><ul class="wrap-verbs-listing"><li><i class="auxgraytxt">habiendo </i><i class="verbtxt">tenido</i></li></ul></div></div></div><div class="word-wrap-row"><div class="wrap-three-col"><div class="word-wrap-title"><h4>Infinitivo </h4></div><div class="blue-box-wrap alt-tense" mobile-title="Infinitivo "><ul class="wrap-verbs-listing top1"><li><i class="verbtxt">tener</i></li></ul></div></div><div class="wrap-three-col" c="1"><div class="word-wrap-title"><h4>Infinitivo compuesto </h4></div><div class="blue-box-wrap" mobile-title="Infinitivo compuesto "><ul class="wrap-verbs-listing"><li><i class="auxgraytxt">haber </i><i class="verbtxt">tenido</i></li></ul></div></div><div class="wrap-three-col"><div class="word-wrap-title"><h4>Participio Pasado</h4></div><div class="blue-box-wrap alt-tense" mobile-title="Participio Pasado"><ul class="wrap-verbs-listing top3"><li><i class="verbtxt">tenido</i></li></ul></div></div></div></div></div>
+"""
+
 def conjugation_table(_from: str, _to: str, verb: str | None = None, time: str|None=None):
-	if _to not in short_names:
+	if _to not in short_names and _to not in short_names.values():
 		print(f"Error: Language '{_to}' not supported for Reverso conjugation.", file=sys.stderr)
 		sys.exit(1)
 
@@ -110,6 +183,8 @@ def conjugation_table(_from: str, _to: str, verb: str | None = None, time: str|N
 	if data is None:
 		print(f"Error: Unable to fetch conjugation data for verb '{verb}' in language '{_to}'.", file=sys.stderr)
 		sys.exit(1)
+
+	# print(data)
 
 # Get conjugation in source language
 	# verb_from = translate_word(_to, _from, verb, get_first_string=True)
@@ -128,24 +203,24 @@ def conjugation_table(_from: str, _to: str, verb: str | None = None, time: str|N
 	for mood in data:
 	# for mood in data:
 		# print(mood.upper())
-		for t in data[mood]:
+		# for t in data[mood]:
 			table = Table(title=mood.upper())
 			table.add_column("", justify="left", style="green")
 			conj_lists = []
 			col0 = True
 			# print(t)
-			if t:
-				for submood in t:
+			if data[mood]:
+				for submood in data[mood]:
 					# print("  "+submood.upper().replace("-", " "))
 					table.add_column(submood.upper(), justify="left", style="green")
 					i = 0
-					for conj in t[submood]:
+					for conj in data[mood][submood]:
 						# print("    "+conj)
 						if i >= len(conj_lists):
 							conj_lists.append([])
 						if col0:
 							conj_lists[i].append(conj)
-						conj_lists[i].append(t[submood][conj])
+						conj_lists[i].append(data[mood][submood][conj])
 						i += 1
 					col0 = False
 			# print(conj_lists)
