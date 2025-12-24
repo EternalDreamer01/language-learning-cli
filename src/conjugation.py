@@ -136,7 +136,12 @@ def highlight_conj(base: str, full_conj: str, shared_pref: int | None = None, sh
 	b = base or ''
 	text = Text()
 	if aux:
-		text.append(aux, style="dim")
+		if main:
+			text.append(aux, style="dim")
+		else:
+			main = aux
+			aux = ""
+			# print(full_conj)
 
 	# If identical, no highlighting
 	if b == main:

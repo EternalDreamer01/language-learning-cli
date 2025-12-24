@@ -78,6 +78,7 @@ def train_vocabulary(_from: str, _to: str):
 				k: v
 				for k, v in wordlist.items()
 				if len(k) > 2 and len(v) > 2 and k not in never_failed
+					# and k == "spanish" or k == "english" or k == "french" or k == "italian"
 			}
 
 	from_colour = str_to_shell_colour(_from)

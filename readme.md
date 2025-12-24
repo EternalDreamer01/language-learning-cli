@@ -3,6 +3,8 @@
 
 Learn languages through CLI.
 
+## Features
+
 | Feature           | Languages | Offline | Powered by |
 |:-                 |:-         |:-       |:-          |
 | Train vocabulary  | 9  : Romance languages $^1$, Slavic languages $^2$  | ✅ 10MB  | [frekwencja/most-common-words-multilingual](https://github.com/frekwencja/most-common-words-multilingual) |
@@ -14,10 +16,30 @@ Learn languages through CLI.
 - 2: Ukrainian, Russian
 - 3: Chinese, Japanese, Korean
 
+<details><summary>Train</summary><pre>
+
+![train-cyrillic](asset/train-cyrillic.gif) ![train-spanish](asset/train-spanish.gif)
+</pre></details>
+
+<details><summary>Conjugate</summary><pre>
+
+![conjugation](asset/conjugation.png)
+</pre></details>
+
+<details><summary>Translate Word</summary><pre>
+
+![Translate Word](asset/translate-word.png)
+</pre></details>
+
+<details><summary>Translate Text</summary><pre>
+
+![Translate Text](asset/translate-text.png)
+</pre></details>
+
 ## Setup
 
 ```sh
-git clone https://github.com/EternalDreamer01/language-learning-cli.git
+git clone --recurse-submodules https://github.com/EternalDreamer01/language-learning-cli.git
 cd language-learning-cli
 pip3 install -r requirements.txt
 ```
