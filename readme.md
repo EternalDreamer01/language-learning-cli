@@ -3,11 +3,12 @@
 
 Learn languages through CLI.
 
-| Feature           | Languages | Works offline | Powered by |
-|:-                 |:-         |:-             |:-          |
-| Train vocabulary  | 9  : Romance languages $^1$, Slavic languages $^2$  | ✅  | [frekwencja/most-common-words-multilingual](https://github.com/frekwencja/most-common-words-multilingual) |
-| Translation       | 43 : Romance languages $^1$, Russian, Languages of Asia $^3$ | ❌  | [`wrpy`](https://github.com/sdelquin/wrpy) (WordReference) |
-| Conjugation table | 6  : Romance languages $^1$ except English          | ❌  | [Reverso](https://conjugator.reverso.net/) |
+| Feature           | Languages | Offline | Powered by |
+|:-                 |:-         |:-       |:-          |
+| Train vocabulary  | 9  : Romance languages $^1$, Slavic languages $^2$  | ✅ 10MB  | [frekwencja/most-common-words-multilingual](https://github.com/frekwencja/most-common-words-multilingual) |
+| Conjugation table | 10 : English, French, Spanish, German, Italian, Portuguese, Hebrew, Russian, Arabic, Japanese          | ❌  | [Reverso](https://conjugator.reverso.net/) |
+| Translate Word    | 43 : Romance languages $^1$, Russian, Languages of Asia $^3$ | ❌  | [`wrpy`](https://github.com/sdelquin/wrpy) (WordReference) |
+| Translate Text    | 49 : Romance languages $^1$, Slavic languages $^2$, Languages of Asia $^3$ | ✅ 9GB  | [argos-translate](https://github.com/argosopentech/argos-translate) |
 
 - 1: English, French, Italian, Spanish, Portuguese, Romanian, Catalan
 - 2: Ukrainian, Russian
