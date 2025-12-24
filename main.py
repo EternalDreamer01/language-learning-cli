@@ -23,11 +23,11 @@ if __name__ == "__main__":
 	parser = argparse.ArgumentParser(prog="language-learning-cli", description="A CLI tool for language learning.")
 	parser.add_argument('FROM', nargs="?")
 	parser.add_argument('TO', nargs="?")
-	parser.add_argument('WORD', nargs="?")
+	parser.add_argument('WORD', metavar="WORD | TEXT", nargs="?")
 	parser.add_argument('-c', '--conjugation', action='store_true', help='Conjugate verbs')
 	parser.add_argument('-w', '--translate-word', action='store_true', help='Translate word')
 	parser.add_argument('-f', '--compound-forms', action='store_true', help='Include compound forms')
-	parser.add_argument('-t', '--translate-text', type=str, help='Translate text')
+	parser.add_argument('-t', '--translate-text', action='store_true', help='Translate text')
 	args = parser.parse_args()
 
 	# print(args)
@@ -47,6 +47,11 @@ if __name__ == "__main__":
 	elif args.translate_word:
 		translate_word(_from, _to, args.WORD, args.compound_forms)
 		# print(json.dumps(WordReference(_from, _to).translate(args.translate_word)))
+
+	elif args.translate_text:
+		translate_text(_from, _to, args.WORD)
+		# print(json.dumps(WordReference(_from, _to).translate(args.translate_word)))
+
 	else:
 		train_vocabulary(_from, _to)
 

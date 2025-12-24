@@ -18,3 +18,4 @@
 from .conjugation import conjugation_table
 from .train import train_vocabulary
 from .translate import translate_word
+from .translate_text import translate_text
