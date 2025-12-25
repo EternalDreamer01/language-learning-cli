@@ -299,13 +299,19 @@ def conjugation_table(_from: str, _to: str, verb: str | None = None, time: str|N
 		# for t in data[mood]:
 			title = None if len(data[mood]) == 1 else mood.upper()
 			table = Table(title=title)
-			table.add_column("", justify="left", style="bold")
+			# for submood, value in data[mood].items():
+			# 	print(submood, value, bool(value), type(value))
+			if all(
+					all(k for k in subdict)
+					for subdict in data[mood].values()
+				):
+				table.add_column("", justify="left", style="bold")
 			conj_lists = []
 			col0 = True
 			# print(t)
 			if data[mood]:
 				for submood in data[mood]:
-					# print("  "+submood.upper().replace("-", " "))
+					# print(data[mood][submood].keys())
 					table.add_column(submood.upper(), justify="left")
 					i = 0
 					# compute shared prefix/suffix for this submood (whole mood-aware highlighting)
@@ -323,7 +329,7 @@ def conjugation_table(_from: str, _to: str, verb: str | None = None, time: str|N
 						# print("    "+conj)
 						if i >= len(conj_lists):
 							conj_lists.append([])
-						if col0:
+						if col0 and conj:
 							conj_lists[i].append(Text(conj))
 						highlighted = highlight_conj(verb, data[mood][submood][conj], shared_pref=shared_pref, shared_suf=shared_suf)
 						conj_lists[i].append(highlighted)
