@@ -106,11 +106,15 @@ def _shared_prefix_suffix(strings: list[str]) -> tuple[int, int]:
 		return 0, 0
 	strings = [s or '' for s in strings]
 	pref = 0
+	# diftong = ""
 	for chars in zip(*strings):
+		# print(chars, diftong, pref)
 		if all(c == chars[0] for c in chars):
 			pref += 1
+
 		else:
 			break
+
 	rev = [s[pref:][::-1] for s in strings]
 	suf = 0
 	for chars in zip(*rev):
@@ -127,7 +131,7 @@ def highlight_conj(base: str, full_conj: str, shared_pref: int | None = None, sh
 	If `shared_pref`/`shared_suf` provided, use those bounds (computed for the whole mood).
 	Otherwise compute prefix/suffix between `base` and the conjugation.
 	"""
-	parts = full_conj.rsplit(' ', 1)
+	parts = full_conj.strip().rsplit(' ', 1)
 	if len(parts) == 2:
 		aux, main = parts[0] + ' ', parts[1]
 	else:
@@ -136,11 +140,10 @@ def highlight_conj(base: str, full_conj: str, shared_pref: int | None = None, sh
 	b = base or ''
 	text = Text()
 	if aux:
-		if main:
-			text.append(aux, style="dim")
-		else:
-			main = aux
-			aux = ""
+		text.append(aux, style="dim")
+		# else:
+		# 	main = aux
+		# 	aux = ""
 			# print(full_conj)
 
 	# If identical, no highlighting
@@ -294,7 +297,8 @@ def conjugation_table(_from: str, _to: str, verb: str | None = None, time: str|N
 	# for mood in data:
 		# print(mood.upper())
 		# for t in data[mood]:
-			table = Table(title=mood.upper())
+			title = None if len(data[mood]) == 1 else mood.upper()
+			table = Table(title=title)
 			table.add_column("", justify="left", style="bold")
 			conj_lists = []
 			col0 = True
@@ -307,10 +311,12 @@ def conjugation_table(_from: str, _to: str, verb: str | None = None, time: str|N
 					# compute shared prefix/suffix for this submood (whole mood-aware highlighting)
 					mains = []
 					for conj_val in data[mood][submood].values():
-						parts = conj_val.rsplit(' ', 1)
+						parts = conj_val.strip().rsplit(' ', 1)
+						# print(parts)
 						main = parts[-1] if parts else conj_val
 						mains.append(main)
 					# include base main (verb) in shared computation
+					# print(parts, mains)
 					base_main = verb.split()[-1] if verb else ''
 					shared_pref, shared_suf = _shared_prefix_suffix([base_main] + mains)
 					for conj in data[mood][submood]:
