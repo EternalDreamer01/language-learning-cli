@@ -39,8 +39,8 @@ Learn languages through CLI.
 ## Setup
 
 ```sh
-git clone --recurse-submodules https://github.com/EternalDreamer01/language-learning-cli.git
-cd language-learning-cli
+git clone --depth=1 --recurse-submodules https://github.com/EternalDreamer01/language-learning-cli.git && \
+cd language-learning-cli && \
 pip3 install -r requirements.txt
 ```
 
