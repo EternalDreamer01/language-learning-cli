@@ -2,4 +2,6 @@ wrpy
 dotenv
 unidecode
 prompt_toolkit
+rich
+beautifulsoup4
 python-benedict[all]
