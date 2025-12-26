@@ -26,8 +26,12 @@ if __name__ == "__main__":
 	parser.add_argument('WORD', metavar="WORD | TEXT", nargs="?")
 	parser.add_argument('-c', '--conjugation', action='store_true', help='Conjugate verbs')
 	parser.add_argument('-w', '--translate-word', action='store_true', help='Translate word')
-	parser.add_argument('-f', '--compound-forms', action='store_true', help='Include compound forms')
 	parser.add_argument('-t', '--translate-text', action='store_true', help='Translate text')
+
+	parser_translate_word = parser.add_argument_group("Translate Word")
+	parser_translate_word.add_argument('-f', '--compound-forms', dest="COMPOUND", action='store_true', help='Include compound forms')
+	parser_translate_word.add_argument('-o', '--compact', dest="COMPACT", action='store_true', help='Compact translate word output (without examples)')
+	parser_translate_word.add_argument('-m', '--main', dest="MAIN", action='store_true', help='Main translation only (first results)')
 	args = parser.parse_args()
 
 	# print(args)
@@ -45,7 +49,7 @@ if __name__ == "__main__":
 		sys.exit(1)
 
 	elif args.translate_word:
-		translate_word(_from, _to, args.WORD, args.compound_forms)
+		translate_word(_from, _to, args.WORD, args.COMPOUND, args.COMPACT, args.MAIN)
 		# print(json.dumps(WordReference(_from, _to).translate(args.translate_word)))
 
 	elif args.translate_text:

@@ -23,7 +23,7 @@ WORD_CONTEXT_ADJUST = 28
 WORD_FROM_ADJUST_FULL = 25
 WORD_FROM_ADJUST = WORD_FROM_ADJUST_FULL - 10
 
-def translate_word(_from: str, _to: str, word: str, compound_forms: bool = False, get_first_string: bool = False):
+def translate_word(_from: str, _to: str, word: str, compound_forms: bool = False, compact: bool = False, main_translations: bool = False, get_first_string: bool = False):
 	data = {}
 	changed_to_english = False
 	while not data:
@@ -88,6 +88,9 @@ def translate_word(_from: str, _to: str, word: str, compound_forms: bool = False
 					previous_context = context
 				
 			# Example
-			if entry["from_example"] is not None and len(entry["to_example"]) != 0:
+			if not compact and entry["from_example"] is not None and len(entry["to_example"]) != 0:
 				print_unique_example(entry["from_example"], entry["to_example"][0], 8)
 			print()
+
+		if main_translations:
+			break
