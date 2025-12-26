@@ -14,7 +14,8 @@
 # 
 ################################################################################
 
-import sys
+from email.mime import base
+import sys, re
 from benedict import benedict
 from rich.console import Console
 from rich.table import Table
@@ -94,7 +95,7 @@ def parse_conjugation_data(html_string):
 		
 		return benedict(result)
 	except (AttributeError, TypeError):
-		print("error")
+		# print("error")
 		pass
 
 
@@ -256,12 +257,55 @@ __data = """<div id="ch_divSimple" class="word-wrap-simple"><div class="result-b
 # <div id="ch_divSimple" class="word-wrap-simple"><div class="result-block-api"><div class="word-wrap-row"><div class="word-wrap-title"><h4>Indicative</h4></div><div class="wrap-three-col"><div class="blue-box-wrap" mobile-title="Indicative Present"><p>Present</p><ul class="wrap-verbs-listing"><li><i class="graytxt" style="">I </i><i class="verbtxt" style="">have</i></li><li><i class="graytxt" style="">you </i><i class="verbtxt" style="">have</i></li><li><i class="graytxt">he/she/it </i><i class="verbtxt">has</i></li><li><i class="graytxt">we </i><i class="verbtxt">have</i></li><li><i class="graytxt">you </i><i class="verbtxt">have</i></li><li><i class="graytxt" style="">they </i><i class="verbtxt" style="">have</i></li></ul></div></div><div class="wrap-three-col"><div class="blue-box-wrap" mobile-title="Indicative Preterite"><p>Preterite</p><ul class="wrap-verbs-listing top2"><li><i class="graytxt">I </i><i class="verbtxt">had</i></li><li><i class="graytxt" style="">you </i><i class="verbtxt" style="">had</i></li><li><i class="graytxt" style="">he/she/it </i><i class="verbtxt" style="">had</i></li><li><i class="graytxt">we </i><i class="verbtxt">had</i></li><li><i class="graytxt">you </i><i class="verbtxt">had</i></li><li><i class="graytxt" style="">they </i><i class="verbtxt" style="">had</i></li></ul></div></div><div class="wrap-three-col" c="1"><div class="blue-box-wrap" mobile-title="Indicative Present continuous"><p>Present continuous</p><ul class="wrap-verbs-listing"><li><i class="graytxt" style="">I </i><i class="auxgraytxt" style="">am </i><i class="verbtxt" style="">having</i></li><li><i class="graytxt">you </i><i class="auxgraytxt">are </i><i class="verbtxt">having</i></li><li><i class="graytxt" style="">he/she/it </i><i class="auxgraytxt" style="">is </i><i class="verbtxt" style="">having</i></li><li><i class="graytxt" style="">we </i><i class="auxgraytxt" style="">are </i><i class="verbtxt" style="">having</i></li><li><i class="graytxt" style="">you </i><i class="auxgraytxt" style="">are </i><i class="verbtxt" style="">having</i></li><li><i class="graytxt" style="">they </i><i class="auxgraytxt" style="">are </i><i class="verbtxt" style="">having</i></li></ul></div></div></div><div class="word-wrap-row"><div class="wrap-three-col" c="1"><div class="blue-box-wrap" mobile-title="Indicative Present perfect"><p>Present perfect</p><ul class="wrap-verbs-listing"><li><i class="graytxt">I </i><i class="auxgraytxt">have </i><i class="verbtxt">had</i></li><li><i class="graytxt">you </i><i class="auxgraytxt">have </i><i class="verbtxt">had</i></li><li><i class="graytxt">he/she/it </i><i class="auxgraytxt">has </i><i class="verbtxt">had</i></li><li><i class="graytxt">we </i><i class="auxgraytxt">have </i><i class="verbtxt">had</i></li><li><i class="graytxt">you </i><i class="auxgraytxt">have </i><i class="verbtxt">had</i></li><li><i class="graytxt">they </i><i class="auxgraytxt">have </i><i class="verbtxt">had</i></li></ul></div></div><div class="wrap-three-col"><div class="blue-box-wrap" mobile-title="Indicative Future"><p>Future</p><ul class="wrap-verbs-listing"><li><i class="graytxt" style="">I </i><i class="particletxt" style="">will </i><i class="verbtxt" style="">have</i></li><li><i class="graytxt" style="">you </i><i class="particletxt" style="">will </i><i class="verbtxt" style="">have</i></li><li><i class="graytxt" style="">he/she/it </i><i class="particletxt" style="">will </i><i class="verbtxt" style="">have</i></li><li><i class="graytxt" style="">we </i><i class="particletxt" style="">will </i><i class="verbtxt" style="">have</i></li><li><i class="graytxt" style="">you </i><i class="particletxt" style="">will </i><i class="verbtxt" style="">have</i></li><li><i class="graytxt" style="">they </i><i class="particletxt" style="">will </i><i class="verbtxt" style="">have</i></li></ul></div></div><div class="wrap-three-col" c="1"><div class="blue-box-wrap" mobile-title="Indicative Future perfect"><p>Future perfect</p><ul class="wrap-verbs-listing"><li><i class="graytxt" style="">I </i><i class="particletxt" style="">will </i><i class="auxgraytxt" style="">have </i><i class="verbtxt" style="">had</i></li><li><i class="graytxt" style="">you </i><i class="particletxt" style="">will </i><i class="auxgraytxt" style="">have </i><i class="verbtxt" style="">had</i></li><li><i class="graytxt" style="">he/she/it </i><i class="particletxt" style="">will </i><i class="auxgraytxt" style="">have </i><i class="verbtxt" style="">had</i></li><li><i class="graytxt" style="">we </i><i class="particletxt" style="">will </i><i class="auxgraytxt" style="">have </i><i class="verbtxt" style="">had</i></li><li><i class="graytxt" style="">you </i><i class="particletxt" style="">will </i><i class="auxgraytxt" style="">have </i><i class="verbtxt" style="">had</i></li><li><i class="graytxt" style="">they </i><i class="particletxt" style="">will </i><i class="auxgraytxt" style="">have </i><i class="verbtxt" style="">had</i></li></ul></div></div></div><div class="word-wrap-row"><div class="wrap-three-col" c="1"><div class="blue-box-wrap" mobile-title="Indicative Past continous"><p>Past continous</p><ul class="wrap-verbs-listing"><li><i class="graytxt">I </i><i class="auxgraytxt">was </i><i class="verbtxt">having</i></li><li><i class="graytxt">you </i><i class="auxgraytxt">were </i><i class="verbtxt">having</i></li><li><i class="graytxt">he/she/it </i><i class="auxgraytxt">was </i><i class="verbtxt">having</i></li><li><i class="graytxt">we </i><i class="auxgraytxt">were </i><i class="verbtxt">having</i></li><li><i class="graytxt">you </i><i class="auxgraytxt">were </i><i class="verbtxt">having</i></li><li><i class="graytxt">they </i><i class="auxgraytxt">were </i><i class="verbtxt">having</i></li></ul></div></div><div class="wrap-three-col" c="1"><div class="blue-box-wrap" mobile-title="Indicative Past perfect"><p>Past perfect</p><ul class="wrap-verbs-listing"><li><i class="graytxt" style="">I </i><i class="auxgraytxt" style="">had </i><i class="verbtxt" style="">had</i></li><li><i class="graytxt" style="">you </i><i class="auxgraytxt" style="">had </i><i class="verbtxt" style="">had</i></li><li><i class="graytxt" style="">he/she/it </i><i class="auxgraytxt" style="">had </i><i class="verbtxt" style="">had</i></li><li><i class="graytxt">we </i><i class="auxgraytxt">had </i><i class="verbtxt">had</i></li><li><i class="graytxt">you </i><i class="auxgraytxt">had </i><i class="verbtxt">had</i></li><li><i class="graytxt">they </i><i class="auxgraytxt">had </i><i class="verbtxt">had</i></li></ul></div></div><div class="wrap-three-col" c="1"><div class="blue-box-wrap" mobile-title="Indicative Future continuous"><p>Future continuous</p><ul class="wrap-verbs-listing"><li><i class="graytxt" style="">I </i><i class="particletxt" style="">will </i><i class="auxgraytxt" style="">be </i><i class="verbtxt" style="">having</i></li><li><i class="graytxt" style="">you </i><i class="particletxt" style="">will </i><i class="auxgraytxt" style="">be </i><i class="verbtxt" style="">having</i></li><li><i class="graytxt" style="">he/she/it </i><i class="particletxt" style="">will </i><i class="auxgraytxt" style="">be </i><i class="verbtxt" style="">having</i></li><li><i class="graytxt" style="">we </i><i class="particletxt" style="">will </i><i class="auxgraytxt" style="">be </i><i class="verbtxt" style="">having</i></li><li><i class="graytxt" style="">you </i><i class="particletxt" style="">will </i><i class="auxgraytxt" style="">be </i><i class="verbtxt" style="">having</i></li><li><i class="graytxt" style="">they </i><i class="particletxt" style="">will </i><i class="auxgraytxt" style="">be </i><i class="verbtxt" style="">having</i></li></ul></div></div></div><div class="word-wrap-row"><div class="wrap-three-col" c="1"><div class="blue-box-wrap" mobile-title="Indicative Present perfect continuous"><p>Present perfect continuous</p><ul class="wrap-verbs-listing"><li><i class="graytxt">I </i><i class="auxgraytxt">have </i><i class="auxgraytxt">been </i><i class="verbtxt">having</i></li><li><i class="graytxt">you </i><i class="auxgraytxt">have </i><i class="auxgraytxt">been </i><i class="verbtxt">having</i></li><li><i class="graytxt">he/she/it </i><i class="auxgraytxt">has </i><i class="auxgraytxt">been </i><i class="verbtxt">having</i></li><li><i class="graytxt">we </i><i class="auxgraytxt">have </i><i class="auxgraytxt">been </i><i class="verbtxt">having</i></li><li><i class="graytxt">you </i><i class="auxgraytxt">have </i><i class="auxgraytxt">been </i><i class="verbtxt">having</i></li><li><i class="graytxt">they </i><i class="auxgraytxt">have </i><i class="auxgraytxt">been </i><i class="verbtxt">having</i></li></ul></div></div><div class="wrap-three-col" c="1"><div class="blue-box-wrap" mobile-title="Indicative Past perfect continuous"><p>Past perfect continuous</p><ul class="wrap-verbs-listing"><li><i class="graytxt">I </i><i class="auxgraytxt">had </i><i class="auxgraytxt">been </i><i class="verbtxt">having</i></li><li><i class="graytxt">you </i><i class="auxgraytxt">had </i><i class="auxgraytxt">been </i><i class="verbtxt">having</i></li><li><i class="graytxt">he/she/it </i><i class="auxgraytxt">had </i><i class="auxgraytxt">been </i><i class="verbtxt">having</i></li><li><i class="graytxt">we </i><i class="auxgraytxt">had </i><i class="auxgraytxt">been </i><i class="verbtxt">having</i></li><li><i class="graytxt">you </i><i class="auxgraytxt">had </i><i class="auxgraytxt">been </i><i class="verbtxt">having</i></li><li><i class="graytxt">they </i><i class="auxgraytxt">had </i><i class="auxgraytxt">been </i><i class="verbtxt">having</i></li></ul></div></div><div class="wrap-three-col" c="1"><div class="blue-box-wrap" mobile-title="Indicative Future perfect continuous"><p>Future perfect continuous</p><ul class="wrap-verbs-listing"><li><i class="graytxt">I </i><i class="particletxt">will </i><i class="auxgraytxt">have </i><i class="auxgraytxt">been </i><i class="verbtxt">having</i></li><li><i class="graytxt" style="">you </i><i class="particletxt" style="">will </i><i class="auxgraytxt" style="">have </i><i class="auxgraytxt" style="">been </i><i class="verbtxt" style="">having</i></li><li><i class="graytxt">he/she/it </i><i class="particletxt">will </i><i class="auxgraytxt">have </i><i class="auxgraytxt">been </i><i class="verbtxt">having</i></li><li><i class="graytxt">we </i><i class="particletxt">will </i><i class="auxgraytxt">have </i><i class="auxgraytxt">been </i><i class="verbtxt">having</i></li><li><i class="graytxt">you </i><i class="particletxt">will </i><i class="auxgraytxt">have </i><i class="auxgraytxt">been </i><i class="verbtxt">having</i></li><li><i class="graytxt">they </i><i class="particletxt">will </i><i class="auxgraytxt">have </i><i class="auxgraytxt">been </i><i class="verbtxt">having</i></li></ul></div></div></div><div class="word-wrap-row"><div class="word-wrap-title two-col-right"><h4>Participle</h4></div><div class="wrap-three-col" style="margin-top: -21px;"><div class="word-wrap-title"><h4>Imperative </h4></div><div class="blue-box-wrap alt-tense" mobile-title="Imperative "><ul class="wrap-verbs-listing"><li><i class="verbtxt">have</i></li><li><i class="particletxt">let's </i><i class="verbtxt">have</i></li><li><i class="verbtxt">have</i></li></ul></div></div><div class="wrap-three-col"><div class="blue-box-wrap" mobile-title="Participle Present"><p>Present</p><ul class="wrap-verbs-listing"><li><i class="verbtxt">having</i></li></ul></div></div><div class="wrap-three-col"><div class="blue-box-wrap" mobile-title="Participle Past"><p>Past</p><ul class="wrap-verbs-listing top3"><li><i class="verbtxt">had</i></li></ul></div></div></div><div class="word-wrap-row"><div class="wrap-three-col"><div class="word-wrap-title"><h4>Infinitive </h4></div><div class="blue-box-wrap alt-tense" mobile-title="Infinitive "><ul class="wrap-verbs-listing top1"><li><i class="particletxt">to </i><i class="verbtxt">have</i></li></ul></div></div><div class="wrap-three-col" c="1"><div class="word-wrap-title"><h4>Perfect participle </h4></div><div class="blue-box-wrap" mobile-title="Perfect participle "><ul class="wrap-verbs-listing"><li><i class="auxgraytxt">having </i><i class="verbtxt">had</i></li></ul></div></div></div></div></div>
 # """
 
+PRONOUNS = {
+	"en": ["I", "you", "he/she/it", "we", "you", "they"],
+	"fr": ["je", "tu", "il/elle/on", "nous", "vous", "ils/elles"],
+	"es": ["yo", "tú", "él/ella/usted", "nosotros/as", "vosotros/as", "ellos/ellas/ustedes"],
+}
+
 CONJUGATION_LINKS = {
 	"enfr": {
 		"Indicative.Present": "Indicatif.Présent",
-		"Indicative.Present": "Indicatif.Présent"
+		"Indicative.Future": "Indicatif.Futur",
+		# "Indicative.Present": "Indicatif.Présent"
+	},
+	"enes": {
+		"Indicative.Present": "Indicativo.Presente",
+		"Indicative.Future": "Indicativo.Futuro",
+		"Indicative.Future": "Indicativo.Futuro",
+		# "Indicative.Present": "Indicatif.Présent"
 	}
 }
+
+def link_pronouns(pronoun: str, from_code: str, to_code: str) -> str:
+	pronoun = pronoun.strip().split(' ')[-1]
+	from_pronouns = PRONOUNS.get(from_code, [])
+	to_pronouns = PRONOUNS.get(to_code, [])
+	if pronoun in from_pronouns:
+		# print("Found pronoun:", pronoun)
+		index = from_pronouns.index(pronoun)
+		if index < len(to_pronouns):
+			return to_pronouns[index]
+		return ""
+	base = pronoun.split('/')[0]
+	# print("Base pronoun:", base)
+	for i, p in enumerate(from_pronouns):
+		if base == p.split('/')[0]:
+			if i < len(to_pronouns):
+				return to_pronouns[i]
+	return ""
+
+def reverse_link_pronouns(data_from: dict, path: str, pronoun_from: str) -> str:
+	def __pronoun_replace(match: re.Match) -> str:
+		pronoun_from = match.group(0)
+		# print("group:", pronoun_from)
+		if pronoun_from == "/usted":
+			return "/Ud"
+		elif pronoun_from == "/ustedes":
+			return "/Uds"
+		return ""
+	# print(data_from)
+	return data_from.get(f"{path}.{re.sub(r"/(on|as|usted(es)?)$", __pronoun_replace, pronoun_from)} ")
 
 
 def conjugation_table(_from: str, _to: str, verb: str | None = None, time: str|None=None):
@@ -286,18 +330,23 @@ def conjugation_table(_from: str, _to: str, verb: str | None = None, time: str|N
 		# print(data)
 
 # Get conjugation in source language
-	# verb_from = translate_word(_to, _from, verb, get_first_string=True)
-	# language = short_names[_from] or _from
+	verb_from = translate_word(_to, _from, verb, get_first_string=True)
+	language = short_names[_from] or _from
 
-	# d = requests.get(
-	# 	f"https://conjugator.reverso.net/conjugation-{language}-verb-{verb_from}.html",
-	# 	headers={"User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0"}
-	# ).text
+	# print(verb_from)
 
-	# data_from = {"": None, "": None, "": None, "": None, "": None, "": None, "": None, "": None, "": None, "": None, "": None, "": None} # parse_conjugation_data(d)
-	# if data_from is None:
-	# 	print(f"Error: Unable to fetch conjugation data for verb '{verb}' in language '{_to}'.", file=sys.stderr)
-	# 	sys.exit(1)
+	d = requests.get(
+		f"https://conjugator.reverso.net/conjugation-{language}-verb-{verb_from}.html",
+		headers={"User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0"}
+	).text
+
+	data_from = parse_conjugation_data(d) #{"": None, "": None, "": None, "": None, "": None, "": None, "": None, "": None, "": None, "": None, "": None, "": None} # parse_conjugation_data(d)
+	if data_from is None:
+		print(f"Error: Unable to fetch conjugation data for verb '{verb}' in language '{_to}'.", file=sys.stderr)
+		sys.exit(1)
+  
+	conj_lnk_lang = _from+_to if _from+_to in CONJUGATION_LINKS else _to+_from
+
 
 	for mood in data:
 	# for mood in data:
@@ -335,9 +384,26 @@ def conjugation_table(_from: str, _to: str, verb: str | None = None, time: str|N
 						# print("    "+conj)
 						if i >= len(conj_lists):
 							conj_lists.append([])
+						pronoun_from = link_pronouns(conj, _to, _from)
 						if col0 and conj:
-							conj_lists[i].append(Text(conj))
+							pronoun = Text()
+							pronoun.append(conj.strip(), style="bold")
+							pronoun.append("; ", style="not bold")
+							pronoun.append(pronoun_from, style="italic green")
+							conj_lists[i].append(pronoun)
 						highlighted = highlight_conj(verb, data[mood][submood][conj], shared_pref=shared_pref, shared_suf=shared_suf)
+						# print(f"{_from+_to}.'{mood}.{submood}'", _from+_to in CONJUGATION_LINKS, CONJUGATION_LINKS.get(_from+_to), )
+						conj_lnk_key = CONJUGATION_LINKS[conj_lnk_lang].get(f"{mood}.{submood}") or next((key for key, val in CONJUGATION_LINKS[conj_lnk_lang].items() if val == f"{mood}.{submood}"), None)
+						# print(submood, pronoun_from)
+						if conj_lnk_key:
+							# there is data in the from language
+							# print("Indicative" in data_from, "Present" in data_from["Indicative"], type(data_from), data_from[f"{conj_lnk_key}"], "'"+pronoun_from+"'")
+							conj_from = reverse_link_pronouns(data_from, conj_lnk_key, pronoun_from)
+							# print(conj_from)
+							if conj_from:
+								highlighted.append(Text(", "))
+								# highlighted.append(link_pronouns(conj, _to, _from), style="italic green")
+								highlighted.append(Text(conj_from, style="italic green"))
 						conj_lists[i].append(highlighted)
 						i += 1
 					col0 = False

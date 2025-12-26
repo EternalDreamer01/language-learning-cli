@@ -47,7 +47,16 @@ def translate_word(_from: str, _to: str, word: str, compound_forms: bool = False
 		if data["translations"] and data["translations"][0]["entries"]:
 			first_entry = data["translations"][0]["entries"][0]
 			if first_entry["to_word"]:
-				return first_entry["to_word"][0]["meaning"]
+				# print(next((
+				# 	w["meaning"]
+				# 	for w in first_entry["to_word"]
+				# 	if not re.search(r"\b(out|in)$", w["meaning"])
+				# ), None))
+				return next((
+					w["meaning"]
+					for w in first_entry["to_word"]
+					if not re.search(r"\b(out|in)$", w["meaning"])
+				), None)
 		return None
 
 	def show_unique(translation: dict):
