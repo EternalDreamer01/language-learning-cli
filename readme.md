@@ -44,6 +44,12 @@ cd language-learning-cli && \
 pip3 install -r requirements.txt
 ```
 
+If submodule isn't installed properly ;
+```sh
+rm -rf src/most-common-words-multilingual && \
+git clone --depth=1 https://github.com/frekwencja/most-common-words-multilingual src/most-common-words-multilingual
+```
+
 ## Train Vocabulary - Characters management
 
 ### Accents
