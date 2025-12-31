@@ -272,13 +272,60 @@ CONJUGATION_LINKS = {
 	"enes": {
 		"Indicative.Present": "Indicativo.Presente",
 		"Indicative.Future": "Indicativo.Futuro",
-		"Indicative.Future": "Indicativo.Futuro",
 		# "Indicative.Present": "Indicatif.Présent"
+	},
+	"esfr": {
+		"Indicativo.Presente": "Indicatif.Présent",
+		"Indicativo.Futuro": "Indicatif.Futur",
+		"Indicativo.Futuro perfecto": "Indicatif.Futur antérieur",
+
+		"Indicativo.Pretérito perfecto simple": "Indicatif.Passé composé",
+		"Indicativo.Pretérito perfecto compuesto": "Indicatif.Passé composé",
+		"Indicativo.Pretérito imperfecto": "Indicatif.Imparfait",
+		"Indicativo.Pretérito pluscuamperfecto": "Indicatif.Plus-que-parfait",
+		"Indicativo.Pretérito anterior": "Indicatif.Passé antérieur",
+
+		"Indicativo.Condicional": "Conditionnel.Présent",
+		"Indicativo.Condicional perfecto": "Conditionnel.Passé première forme",
+
+		"Subjuntivo.Presente": "Subjonctif.Présent",
+		# "Subjuntivo.Futuro": "Subjonctif.Futur",
+		# "Subjuntivo.Futuro perfecto": "Subjonctif.Futur antérieur",
+
+		"Subjuntivo.Pretérito perfecto simple": "Subjonctif.Passé",
+		"Subjuntivo.Pretérito imperfecto": "Subjonctif.Imparfait",
+		"Subjuntivo.Pretérito imperfecto (2)": "Subjonctif.Imparfait",
+		"Subjuntivo.Pretérito pluscuamperfecto": "Subjonctif.Plus-que-parfait",
+		"Subjuntivo.Pretérito anterior": "Subjonctif.Passé antérieur",
+
+		"Infinitivo": "Infinitif.Présent",
+		"Infinitivo compuesto": "Infinitif.Passé",
+
 	}
 }
 
+
+# CONJUGATION_LINKS = {
+# 	"Indicative.Present": {
+# 		"fr": "Indicatif.Présent",
+# 		"es": "Indicativo.Presente",
+# 	},
+# 	"Indicative.Future": {
+# 		"fr": "Indicatif.Futur",
+# 		"es": "Indicativo.Futuro",
+# 	},
+# 	"Indicative.Preterite": {
+# 		"fr": "Indicatif.Passé Composé",
+# 		"es": "Indicativo.Pretérito imperfecto",
+# 	},
+# }
+
+
 def link_pronouns(pronoun: str, from_code: str, to_code: str) -> str:
+	if pronoun.startswith("qu'"):
+		pronoun = pronoun[3:]
 	pronoun = pronoun.strip().split(' ')[-1]
+	# print("Linking pronoun:", pronoun, from_code, "->", to_code)
 	from_pronouns = PRONOUNS.get(from_code, [])
 	to_pronouns = PRONOUNS.get(to_code, [])
 	if pronoun in from_pronouns:
@@ -305,7 +352,7 @@ def reverse_link_pronouns(data_from: dict, path: str, pronoun_from: str) -> str:
 			return "/Uds"
 		return ""
 	# print(data_from)
-	return data_from.get(f"{path}.{re.sub(r"/(on|as|usted(es)?)$", __pronoun_replace, pronoun_from)} ")
+	return data_from.get(f"{path}.{re.sub(r"qu(?:e\s+|')|/(on|as|usted(es)?)$", __pronoun_replace, pronoun_from)} ")
 
 
 def conjugation_table(_from: str, _to: str, verb: str | None = None, time: str|None=None):
@@ -344,7 +391,9 @@ def conjugation_table(_from: str, _to: str, verb: str | None = None, time: str|N
 	if data_from is None:
 		print(f"Error: Unable to fetch conjugation data for verb '{verb}' in language '{_to}'.", file=sys.stderr)
 		sys.exit(1)
-  
+
+
+	# print(data_from["Subjonctif"], data["Subjuntivo"].keys())
 	conj_lnk_lang = _from+_to if _from+_to in CONJUGATION_LINKS else _to+_from
 
 
@@ -384,26 +433,44 @@ def conjugation_table(_from: str, _to: str, verb: str | None = None, time: str|N
 						# print("    "+conj)
 						if i >= len(conj_lists):
 							conj_lists.append([])
+						
 						pronoun_from = link_pronouns(conj, _to, _from)
 						if col0 and conj:
 							pronoun = Text()
 							pronoun.append(conj.strip(), style="bold")
-							pronoun.append("; ", style="not bold")
+							pronoun.append("; ", style="normal")
 							pronoun.append(pronoun_from, style="italic green")
 							conj_lists[i].append(pronoun)
 						highlighted = highlight_conj(verb, data[mood][submood][conj], shared_pref=shared_pref, shared_suf=shared_suf)
 						# print(f"{_from+_to}.'{mood}.{submood}'", _from+_to in CONJUGATION_LINKS, CONJUGATION_LINKS.get(_from+_to), )
-						conj_lnk_key = CONJUGATION_LINKS[conj_lnk_lang].get(f"{mood}.{submood}") or next((key for key, val in CONJUGATION_LINKS[conj_lnk_lang].items() if val == f"{mood}.{submood}"), None)
-						# print(submood, pronoun_from)
+						conj_lnk_key = CONJUGATION_LINKS[conj_lnk_lang].get(f"{mood}.{submood}") or \
+							next((key for key, val in CONJUGATION_LINKS[conj_lnk_lang].items() if val == f"{mood}.{submood}"), None) or \
+							CONJUGATION_LINKS[conj_lnk_lang].get(mood)
+						# if conj_lnk_key:
+						# 	print(len(data[mood][submood]), data_from.get(conj_lnk_key+"."), data_from.get(conj_lnk_key))
 						if conj_lnk_key:
 							# there is data in the from language
 							# print("Indicative" in data_from, "Present" in data_from["Indicative"], type(data_from), data_from[f"{conj_lnk_key}"], "'"+pronoun_from+"'")
-							conj_from = reverse_link_pronouns(data_from, conj_lnk_key, pronoun_from)
-							# print(conj_from)
-							if conj_from:
-								highlighted.append(Text(", "))
-								# highlighted.append(link_pronouns(conj, _to, _from), style="italic green")
-								highlighted.append(Text(conj_from, style="italic green"))
+							if pronoun and pronoun_from:
+								# print("Warning: Unable to link pronoun", conj, "from", _to, "to", _from, file=sys.stderr)
+								conj_from = reverse_link_pronouns(data_from, conj_lnk_key, pronoun_from)
+								# print(conj_from)
+								if conj_from:
+									highlighted.append(Text(", "))
+									# highlighted.append(link_pronouns(conj, _to, _from), style="italic green")
+									highlighted.append(Text(conj_from, style="italic green"))
+							elif len(data[mood][submood]) == 1:
+								# print("OK")
+								if data_from.get(conj_lnk_key+".") is not None:
+									highlighted.append(Text(", "))
+									highlighted.append(Text(data_from.get(conj_lnk_key+"."), style="italic green"))
+								elif data_from.get(conj_lnk_key) is not None:
+									# print(data_from.get(conj_lnk_key))
+									val = next(iter(data_from.get(conj_lnk_key).values()))
+									val = next(iter(val.values()))
+									highlighted.append(Text(", "))
+									highlighted.append(Text(val, style="italic green"))
+								# print(len(data[mood][submood]))
 						conj_lists[i].append(highlighted)
 						i += 1
 					col0 = False
